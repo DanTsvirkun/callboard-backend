@@ -306,3 +306,11 @@ export const getCalls = (req: Request, res: Response) => {
   const user = req.user;
   res.status(200).send({ favourites: (user as IUser).calls });
 };
+
+export const searchCalls = async (req: Request, res: Response) => {
+  const { search } = req.query;
+  const foundCalls = await CallModel.find({
+    title: { $regex: search as string, $options: "i" },
+  }).lean();
+  return res.status(200).send(foundCalls);
+};

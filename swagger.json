@@ -9,7 +9,7 @@
       "url": "https://opensource.org/licenses/MIT"
     }
   },
-  "servers": [{ "url": "" }],
+  "servers": [{ "url": "https://callboard-backend.herokuapp.com" }],
   "consumes": ["application/json"],
   "produces": ["application/json"],
   "tags": [
@@ -510,6 +510,41 @@
           },
           "400": {
             "description": "No token provided",
+            "content": {}
+          },
+          "401": {
+            "description": "Unauthorized (invalid access token)",
+            "content": {}
+          }
+        }
+      }
+    },
+    "/call/find": {
+      "get": {
+        "tags": ["Call"],
+        "summary": "Get pages with categories by query pagination",
+        "security": [{ "Bearer": [] }],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Call's title",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoundCalls"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (invalid query) / No token provided",
             "content": {}
           },
           "401": {
@@ -1387,7 +1422,7 @@
       },
       "GetFavourites": {
         "type": "object",
-        "description": "User's favourites ",
+        "description": "User's favourites",
         "properties": {
           "favourites": {
             "type": "array",
@@ -1460,7 +1495,7 @@
       },
       "GetOwn": {
         "type": "object",
-        "description": "User's favourites ",
+        "description": "User's calls",
         "properties": {
           "favourites": {
             "type": "array",
@@ -1527,6 +1562,73 @@
                   "description": "MongoDB' document's service versionKey (ignore)"
                 }
               }
+            }
+          }
+        }
+      },
+      "FoundCalls": {
+        "type": "array",
+        "description": "Found calls array",
+        "items": {
+          "type": "object",
+          "description": "Found call",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "Call's title",
+              "example": "Tesla Model X"
+            },
+            "imageUrls": {
+              "type": "array",
+              "description": "Call's image URLs",
+              "items": {
+                "type": "string",
+                "description": "Image URL"
+              }
+            },
+            "description": {
+              "type": "string",
+              "description": "Call's description",
+              "example": "New tesla"
+            },
+            "category": {
+              "type": "string",
+              "description": "Call's category",
+              "example": "Transport"
+            },
+            "price": {
+              "type": "number",
+              "description": "Call's price",
+              "example": 1500000
+            },
+            "oldPrice": {
+              "oneOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Call's old price (if was changed and became lower)",
+              "example": 1750000
+            },
+            "isOnSale": {
+              "type": "boolean",
+              "description": "Call's sale status",
+              "example": true
+            },
+            "discountPercents": {
+              "oneOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Call's discount percents (if on sale)",
+              "example": 14.28571428571429
+            },
+            "phone": {
+              "type": "string",
+              "description": "Call author's phone",
+              "example": "+380000000000"
+            },
+            "_id": {
+              "type": "string",
+              "description": "Call's id",
+              "example": "507f1f77bcf86cd799439013"
+            },
+            "__v": {
+              "type": "integer",
+              "description": "MongoDB' document's service versionKey (ignore)"
             }
           }
         }

@@ -1194,6 +1194,87 @@ describe("Call router test suite", () => {
     });
   });
 
+  describe("GET /call/find", () => {
+    let response: Response;
+
+    context("Valid request", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .get("/call/find?search=test")
+          .set("Authorization", `Bearer ${accessToken}`);
+      });
+
+      it("Should return a 200 status code", () => {
+        expect(response.status).toBe(200);
+      });
+
+      it("Should return an expected result", () => {
+        expect(response.body).toEqual([
+          {
+            title: "Test2",
+            description: "Test2",
+            category: Categories.TRANSPORT,
+            price: 1,
+            phone: "+380000000001",
+            isOnSale: true,
+            oldPrice: 4,
+            discountPercents: 75,
+            imageUrls: response.body[0].imageUrls,
+            _id: (createdCall as ICall)._id.toString(),
+            userId: (createdUser as IUser)._id.toString(),
+            __v: 0,
+          },
+        ]);
+      });
+    });
+
+    context("Without providing query", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .get("/call/find")
+          .set("Authorization", `Bearer ${accessToken}`);
+      });
+
+      it("Should return a 400 status code", () => {
+        expect(response.status).toBe(400);
+      });
+
+      it("Should say that 'search' is required", () => {
+        expect(response.body.message).toBe('"search" is required');
+      });
+    });
+
+    context("Without providing 'accessToken'", () => {
+      beforeAll(async () => {
+        response = await supertest(app).get("/call/find?search=test");
+      });
+
+      it("Should return a 400 status code", () => {
+        expect(response.status).toBe(400);
+      });
+
+      it("Should say that token wasn't provided", () => {
+        expect(response.body.message).toBe("No token provided");
+      });
+    });
+
+    context("With invalid 'accessToken'", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .get("/call/find?search=test")
+          .set("Authorization", `Bearer qwerty123`);
+      });
+
+      it("Should return a 401 status code", () => {
+        expect(response.status).toBe(401);
+      });
+
+      it("Should return an unauthorized status", () => {
+        expect(response.body.message).toBe("Unauthorized");
+      });
+    });
+  });
+
   describe("DELETE /call/:callId", () => {
     let response: Response;
     let deletedCall: ICall | null;

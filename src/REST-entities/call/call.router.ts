@@ -13,6 +13,7 @@ import {
   loadPages,
   getFavourites,
   getCalls,
+  searchCalls,
 } from "./call.controller";
 import { multerMid } from "../../helpers/function-helpers/multer-config";
 import { Categories } from "../../helpers/typescript-helpers/enums";
@@ -89,6 +90,10 @@ const getCallsSchema = Joi.object({
   page: Joi.number().required().min(1).max(3),
 });
 
+const searchCallsSchema = Joi.object({
+  search: Joi.string().required(),
+});
+
 const router = Router();
 
 router.post(
@@ -132,5 +137,11 @@ router.get(
 );
 router.get("/own", authorize, tryCatchWrapper(getCalls));
 router.get("/favourites", authorize, tryCatchWrapper(getFavourites));
+router.get(
+  "/find",
+  authorize,
+  validate(searchCallsSchema, "query"),
+  tryCatchWrapper(searchCalls)
+);
 
 export default router;
