@@ -1,9 +1,10 @@
 import { Application } from "express";
-import mongoose, { Document } from "mongoose";
+import mongoose from "mongoose";
 import supertest, { Response } from "supertest";
 import path from "path";
 import Server from "../../server/server";
 import { IUser, ICall } from "../../helpers/typescript-helpers/interfaces";
+import { Categories } from "./../../helpers/typescript-helpers/enums";
 import UserModel from "../../REST-entities/user/user.model";
 import SessionModel from "../session/session.model";
 import CallModel from "./call.model";
@@ -11,9 +12,11 @@ import CallModel from "./call.model";
 describe("Call router test suite", () => {
   let app: Application;
   let response: Response;
-  let createdUser: Document | null;
-  let createdCall: Document | null;
+  let secondResponse: Response;
+  let createdUser: IUser | null;
+  let createdCall: ICall | null;
   let accessToken: string;
+  let secondAccessToken: string;
 
   beforeAll(async () => {
     app = new Server().startForTesting();
@@ -27,16 +30,25 @@ describe("Call router test suite", () => {
     await supertest(app)
       .post("/auth/register")
       .send({ email: "test@email.com", password: "qwerty123" });
+    await supertest(app)
+      .post("/auth/register")
+      .send({ email: "testt@email.com", password: "qwerty123" });
     response = await supertest(app)
       .post("/auth/login")
       .send({ email: "test@email.com", password: "qwerty123" });
+    secondResponse = await supertest(app)
+      .post("/auth/login")
+      .send({ email: "testt@email.com", password: "qwerty123" });
     accessToken = response.body.accessToken;
+    secondAccessToken = secondResponse.body.accessToken;
     createdUser = await UserModel.findById(response.body.user.id);
   });
 
   afterAll(async () => {
-    await UserModel.deleteOne({ email: "test@email.com" });
+    await UserModel.deleteOne({ _id: response.body.user.id });
+    await UserModel.deleteOne({ _id: secondResponse.body.user.id });
     await SessionModel.deleteOne({ _id: response.body.sid });
+    await SessionModel.deleteOne({ _id: secondResponse.body.sid });
     await mongoose.connection.close();
   });
 
@@ -50,8 +62,8 @@ describe("Call router test suite", () => {
           .set("Authorization", `Bearer ${accessToken}`)
           .field("title", "Test")
           .field("description", "Test")
-          .field("category", "transport")
-          .field("price", 1)
+          .field("category", Categories.TRANSPORT)
+          .field("price", 2)
           .field("phone", "+380000000000")
           .attach("file", path.join(__dirname, "./test-files/test.jpg"))
           .attach("file", path.join(__dirname, "./test-files/test.jpg"));
@@ -71,8 +83,8 @@ describe("Call router test suite", () => {
         expect(response.body).toEqual({
           title: "Test",
           description: "Test",
-          category: "transport",
-          price: 1,
+          category: Categories.TRANSPORT,
+          price: 2,
           phone: "+380000000000",
           isOnSale: false,
           imageUrls: response.body.imageUrls,
@@ -85,16 +97,12 @@ describe("Call router test suite", () => {
         expect(response.body.imageUrls.length).toBe(2);
       });
 
-      it("Should create a new call in DB", () => {
-        expect(createdCall).toBeTruthy();
-      });
-
       it("Should add new call to user's calls in DB", () => {
         expect((createdUser as IUser).calls[0]).toEqual({
           title: "Test",
           description: "Test",
-          category: "transport",
-          price: 1,
+          category: Categories.TRANSPORT,
+          price: 2,
           phone: "+380000000000",
           isOnSale: false,
           imageUrls: (createdCall as ICall).imageUrls,
@@ -105,14 +113,62 @@ describe("Call router test suite", () => {
       });
     });
 
+    context("Invalid request (images are not provided)", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .post("/call")
+          .set("Authorization", `Bearer ${accessToken}`)
+          .field("title", "Test")
+          .field("description", "Test")
+          .field("category", Categories.TRANSPORT)
+          .field("price", 2)
+          .field("phone", "+380000000000");
+      });
+
+      it("Should return a 400 status code", () => {
+        expect(response.status).toBe(400);
+      });
+
+      it("Should say that no images were provided", () => {
+        expect(response.body.message).toEqual("No images provided");
+      });
+    });
+
+    context(
+      "Invalid request ('price' is not 0, while category is 'free')",
+      () => {
+        beforeAll(async () => {
+          response = await supertest(app)
+            .post("/call")
+            .set("Authorization", `Bearer ${accessToken}`)
+            .field("title", "Test")
+            .field("description", "Test")
+            .field("category", Categories.FREE)
+            .field("price", 2)
+            .field("phone", "+380000000000")
+            .attach("file", path.join(__dirname, "./test-files/test.jpg"));
+        });
+
+        it("Should return a 400 status code", () => {
+          expect(response.status).toBe(400);
+        });
+
+        it("Should say that price for this category must be 0", () => {
+          expect(response.body.message).toEqual(
+            `Can't set price for ${Categories.FREE} category. Must be 0`
+          );
+        });
+      }
+    );
+
     context("Invalid request ('title' is not provided)", () => {
       beforeAll(async () => {
         response = await supertest(app)
           .post("/call")
           .set("Authorization", `Bearer ${accessToken}`)
           .field("description", "Test")
-          .field("category", "transport")
-          .field("price", 1)
+          .field("category", Categories.TRANSPORT)
+          .field("price", 2)
           .field("phone", "+380000000000")
           .attach("file", path.join(__dirname, "./test-files/test.jpg"));
       });
@@ -133,8 +189,8 @@ describe("Call router test suite", () => {
           .set("Authorization", `Bearer ${accessToken}`)
           .field("title", "Test")
           .field("description", "Test")
-          .field("category", "transport")
-          .field("price", 1)
+          .field("category", Categories.TRANSPORT)
+          .field("price", 2)
           .field("phone", "+380000000000")
           .attach("file", path.join(__dirname, "./test-files/test.txt"));
       });
@@ -148,14 +204,14 @@ describe("Call router test suite", () => {
       });
     });
 
-    context("Invalid request ('price' is below 0)", () => {
+    context("Invalid request ('price' is negative)", () => {
       beforeAll(async () => {
         response = await supertest(app)
           .post("/call")
           .set("Authorization", `Bearer ${accessToken}`)
           .field("title", "Test")
           .field("description", "Test")
-          .field("category", "transport")
+          .field("category", Categories.TRANSPORT)
           .field("price", -1)
           .field("phone", "+380000000000")
           .attach("file", path.join(__dirname, "./test-files/test.jpg"));
@@ -172,14 +228,14 @@ describe("Call router test suite", () => {
       });
     });
 
-    context("Invalid request ('price' is an array)", () => {
+    context("Invalid request ('price' not a number)", () => {
       beforeAll(async () => {
         response = await supertest(app)
           .post("/call")
           .set("Authorization", `Bearer ${accessToken}`)
           .field("title", "Test")
           .field("description", "Test")
-          .field("category", "transport")
+          .field("category", Categories.TRANSPORT)
           .field("price", [1, 2, 3])
           .field("phone", "+380000000000")
           .attach("file", path.join(__dirname, "./test-files/test.jpg"));
@@ -201,8 +257,8 @@ describe("Call router test suite", () => {
           .set("Authorization", `Bearer ${accessToken}`)
           .field("title", "Test")
           .field("description", "Test")
-          .field("category", "transport")
-          .field("price", 1)
+          .field("category", Categories.TRANSPORT)
+          .field("price", 2)
           .field("phone", "+38000000000")
           .attach("file", path.join(__dirname, "./test-files/test.jpg"));
       });
@@ -226,7 +282,7 @@ describe("Call router test suite", () => {
           .field("title", "Test")
           .field("description", "Test")
           .field("category", "qwerty123")
-          .field("price", 1)
+          .field("price", 2)
           .field("phone", "+380000000000")
           .attach("file", path.join(__dirname, "./test-files/test.jpg"));
       });
@@ -249,8 +305,8 @@ describe("Call router test suite", () => {
           .set("Authorization", `Bearer ${accessToken}`)
           .field("title", "Test")
           .field("description", "Test")
-          .field("category", "transport")
-          .field("price", 1)
+          .field("category", Categories.TRANSPORT)
+          .field("price", 2)
           .field("phone", "+380000000000")
           .field("extra", "")
           .attach("file", path.join(__dirname, "./test-files/test.jpg"));
@@ -271,8 +327,8 @@ describe("Call router test suite", () => {
           .post("/call")
           .field("title", "Test")
           .field("description", "Test")
-          .field("category", "transport")
-          .field("price", 1)
+          .field("category", Categories.TRANSPORT)
+          .field("price", 2)
           .field("phone", "+380000000000");
       });
 
@@ -292,8 +348,8 @@ describe("Call router test suite", () => {
           .set("Authorization", `Bearer qwerty123`)
           .field("title", "Test")
           .field("description", "Test")
-          .field("category", "transport")
-          .field("price", 1)
+          .field("category", Categories.TRANSPORT)
+          .field("price", 2)
           .field("phone", "+380000000000");
       });
 
@@ -338,8 +394,8 @@ describe("Call router test suite", () => {
         expect((createdUser as IUser).favourites[0]).toEqual({
           title: "Test",
           description: "Test",
-          category: "transport",
-          price: 1,
+          category: Categories.TRANSPORT,
+          price: 2,
           phone: "+380000000000",
           isOnSale: false,
           imageUrls: (createdCall as ICall).imageUrls,
@@ -417,8 +473,83 @@ describe("Call router test suite", () => {
     });
   });
 
+  describe("GET /call/favourites", () => {
+    let response: Response;
+
+    context("Valid request", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .get(`/call/favourites`)
+          .set("Authorization", `Bearer ${accessToken}`);
+        createdUser = await UserModel.findById({
+          _id: (createdUser as IUser)._id,
+        }).lean();
+      });
+
+      it("Should return a 200 status code", () => {
+        expect(response.status).toBe(200);
+      });
+
+      it("Should return an expected result", () => {
+        expect(response.body).toEqual({
+          favourites: (createdUser as IUser).favourites.map((call) => {
+            (call._id = call._id.toString()),
+              (call.userId = call.userId.toString());
+            return call;
+          }),
+        });
+      });
+    });
+
+    context("Without providing 'accessToken'", () => {
+      beforeAll(async () => {
+        response = await supertest(app).get(`/call/favourites`);
+      });
+
+      it("Should return a 400 status code", () => {
+        expect(response.status).toBe(400);
+      });
+
+      it("Should say that token wasn't provided", () => {
+        expect(response.body.message).toBe("No token provided");
+      });
+    });
+
+    context("With invalid 'accessToken'", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .get(`/call/favourites`)
+          .set("Authorization", `Bearer qwerty123`);
+      });
+
+      it("Should return a 401 status code", () => {
+        expect(response.status).toBe(401);
+      });
+
+      it("Should return an unauthorized status", () => {
+        expect(response.body.message).toBe("Unauthorized");
+      });
+    });
+  });
+
   describe("DELETE /call/favourite/{callId}", () => {
     let response: Response;
+
+    context("With another account", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .delete(`/call/favourite/${(createdCall as ICall)._id}`)
+          .set("Authorization", `Bearer ${secondAccessToken}`);
+      });
+
+      it("Should return a 403 status code", () => {
+        expect(response.status).toBe(403);
+      });
+
+      it("Should say that call is not in favourites", () => {
+        expect(response.body.message).toBe("Not in favourites");
+      });
+    });
 
     context("Valid request", () => {
       beforeAll(async () => {
@@ -512,6 +643,758 @@ describe("Call router test suite", () => {
         expect(response.body.message).toBe(
           "Invalid 'callId'. Must be a MongoDB ObjectId"
         );
+      });
+    });
+  });
+
+  describe("PATCH /call/{callId}", () => {
+    let response: Response;
+    let freeCall: Response;
+
+    const validReqBody = {
+      title: "Test2",
+      description: "Test2",
+      category: Categories.TRANSPORT,
+      phone: "+380000000001",
+    };
+
+    const secondValidReqBody = {
+      price: 4,
+    };
+
+    const invalidReqBody = {
+      price: -1,
+    };
+
+    const secondInvalidReqBody = {
+      price: {},
+    };
+
+    const thirdInvalidReqBody = {};
+
+    const fourthInvalidReqBody = {
+      price: 2,
+      extra: "",
+    };
+
+    const fifthInvalidReqBody = {
+      price: 2,
+      category: Categories.WORK,
+    };
+
+    const sixthInvalidReqBody = {
+      price: 2,
+      category: "qwerty123",
+    };
+
+    const seventhInvalidReqBody = {
+      price: 2,
+      phone: "qwerty123",
+    };
+
+    const eighthInvalidReqBody = {
+      price: 1,
+    };
+
+    context("With validReqBody", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .patch(`/call/${(createdCall as ICall)._id}`)
+          .set("Authorization", `Bearer ${accessToken}`)
+          .send(validReqBody);
+        createdCall = await CallModel.findOne({
+          _id: (createdCall as ICall)._id,
+        }).lean();
+        createdUser = await UserModel.findOne({
+          _id: (createdUser as IUser)._id,
+        }).lean();
+      });
+
+      it("Should return a 200 status code", () => {
+        expect(response.status).toBe(200);
+      });
+
+      it("Should return an expected result", () => {
+        expect(response.body).toEqual({
+          title: "Test2",
+          description: "Test2",
+          category: Categories.TRANSPORT,
+          price: 2,
+          phone: "+380000000001",
+          isOnSale: false,
+          imageUrls: response.body.imageUrls,
+          id: (createdCall as ICall)._id.toString(),
+          userId: (createdUser as IUser)._id.toString(),
+        });
+      });
+
+      it("Should update call in DB", () => {
+        expect(createdCall as ICall).toEqual({
+          title: "Test2",
+          description: "Test2",
+          category: Categories.TRANSPORT,
+          price: 2,
+          phone: "+380000000001",
+          isOnSale: false,
+          imageUrls: response.body.imageUrls,
+          _id: (createdCall as ICall)._id,
+          userId: (createdUser as IUser)._id,
+          __v: 0,
+        });
+      });
+
+      it("Should update call in user's call in DB", () => {
+        expect((createdUser as IUser).calls[0]).toEqual({
+          title: "Test2",
+          description: "Test2",
+          category: Categories.TRANSPORT,
+          price: 2,
+          phone: "+380000000001",
+          isOnSale: false,
+          imageUrls: response.body.imageUrls,
+          _id: (createdCall as ICall)._id,
+          userId: (createdUser as IUser)._id,
+          __v: 0,
+        });
+      });
+    });
+
+    context("With secondValidReqBody", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .patch(`/call/${(createdCall as ICall)._id}`)
+          .set("Authorization", `Bearer ${accessToken}`)
+          .send(secondValidReqBody);
+        createdCall = await CallModel.findOne({
+          _id: (createdCall as ICall)._id,
+        }).lean();
+        createdUser = await UserModel.findOne({
+          _id: (createdUser as IUser)._id,
+        }).lean();
+      });
+
+      it("Should return a 200 status code", () => {
+        expect(response.status).toBe(200);
+      });
+
+      it("Should return an expected result", () => {
+        expect(response.body).toEqual({
+          title: "Test2",
+          description: "Test2",
+          category: Categories.TRANSPORT,
+          price: 4,
+          phone: "+380000000001",
+          isOnSale: false,
+          imageUrls: response.body.imageUrls,
+          discountPercents: 0,
+          oldPrice: 2,
+          id: (createdCall as ICall)._id.toString(),
+          userId: (createdUser as IUser)._id.toString(),
+        });
+      });
+
+      it("Should update call in DB", () => {
+        expect(createdCall as ICall).toEqual({
+          title: "Test2",
+          description: "Test2",
+          category: Categories.TRANSPORT,
+          price: 4,
+          phone: "+380000000001",
+          isOnSale: false,
+          imageUrls: response.body.imageUrls,
+          discountPercents: 0,
+          oldPrice: 2,
+          _id: (createdCall as ICall)._id,
+          userId: (createdUser as IUser)._id,
+          __v: 0,
+        });
+      });
+
+      it("Should update call in user's call in DB", () => {
+        expect((createdUser as IUser).calls[0]).toEqual({
+          title: "Test2",
+          description: "Test2",
+          category: Categories.TRANSPORT,
+          price: 4,
+          phone: "+380000000001",
+          isOnSale: false,
+          imageUrls: response.body.imageUrls,
+          discountPercents: 0,
+          oldPrice: 2,
+          _id: (createdCall as ICall)._id,
+          userId: (createdUser as IUser)._id,
+          __v: 0,
+        });
+      });
+    });
+
+    context("With image", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .patch(`/call/${(createdCall as ICall)._id}`)
+          .set("Authorization", `Bearer ${accessToken}`)
+          .field("price", 1)
+          .attach("file", path.join(__dirname, "./test-files/test.jpg"));
+        createdCall = await CallModel.findOne({
+          _id: (createdCall as ICall)._id,
+        }).lean();
+        createdUser = await UserModel.findOne({
+          _id: (createdUser as IUser)._id,
+        }).lean();
+      });
+
+      it("Should return a 200 status code", () => {
+        expect(response.status).toBe(200);
+      });
+
+      it("Should return an expected result", () => {
+        expect(response.body).toEqual({
+          title: "Test2",
+          description: "Test2",
+          category: Categories.TRANSPORT,
+          price: 1,
+          phone: "+380000000001",
+          isOnSale: true,
+          oldPrice: 4,
+          discountPercents: 75,
+          imageUrls: response.body.imageUrls,
+          id: (createdCall as ICall)._id.toString(),
+          userId: (createdUser as IUser)._id.toString(),
+        });
+      });
+
+      it("Should update call in DB", () => {
+        expect(createdCall as ICall).toEqual({
+          title: "Test2",
+          description: "Test2",
+          category: Categories.TRANSPORT,
+          price: 1,
+          phone: "+380000000001",
+          isOnSale: true,
+          oldPrice: 4,
+          discountPercents: 75,
+          imageUrls: response.body.imageUrls,
+          _id: (createdCall as ICall)._id,
+          userId: (createdUser as IUser)._id,
+          __v: 0,
+        });
+      });
+
+      it("Should update call in user's call in DB", () => {
+        expect((createdUser as IUser).calls[0]).toEqual({
+          title: "Test2",
+          description: "Test2",
+          category: Categories.TRANSPORT,
+          price: 1,
+          phone: "+380000000001",
+          isOnSale: true,
+          oldPrice: 4,
+          discountPercents: 75,
+          imageUrls: response.body.imageUrls,
+          _id: (createdCall as ICall)._id,
+          userId: (createdUser as IUser)._id,
+          __v: 0,
+        });
+      });
+
+      it("Should update images", () => {
+        expect((createdCall as ICall).imageUrls.length).toBe(1);
+      });
+    });
+
+    context("With invalidReqBody ('price' is negative)", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .patch(`/call/${(createdCall as ICall)._id}`)
+          .set("Authorization", `Bearer ${accessToken}`)
+          .send(invalidReqBody);
+      });
+
+      it("Should return a 400 status code", () => {
+        expect(response.status).toBe(400);
+      });
+
+      it("Should say that 'price' must be greater than or equal to 0", () => {
+        expect(response.body.message).toBe(
+          '"price" must be greater than or equal to 0'
+        );
+      });
+    });
+
+    context(
+      `Invalid request (changing price for call from ${Categories.FREE} category)`,
+      () => {
+        beforeAll(async () => {
+          freeCall = await supertest(app)
+            .post("/call")
+            .set("Authorization", `Bearer ${accessToken}`)
+            .field("title", "Test")
+            .field("description", "Test")
+            .field("category", Categories.FREE)
+            .field("price", 0)
+            .field("phone", "+380000000000")
+            .attach("file", path.join(__dirname, "./test-files/test.jpg"));
+          response = await supertest(app)
+            .patch(`/call/${freeCall.body.id}`)
+            .set("Authorization", `Bearer ${accessToken}`)
+            .send(secondValidReqBody);
+        });
+
+        afterAll(async () => {
+          await CallModel.deleteOne({ _id: freeCall.body.id });
+        });
+
+        it("Should return a 400 status code", () => {
+          expect(response.status).toBe(400);
+        });
+
+        it(`Should say that price cannot be changed for a call from ${Categories.FREE} category`, () => {
+          expect(response.body.message).toBe(
+            `Can't set price for ${Categories.FREE} category. Must be 0`
+          );
+        });
+      }
+    );
+
+    context("With secondInvalidReqBody ('price' is not a number)", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .patch(`/call/${(createdCall as ICall)._id}`)
+          .set("Authorization", `Bearer ${accessToken}`)
+          .send(secondInvalidReqBody);
+      });
+
+      it("Should return a 400 status code", () => {
+        expect(response.status).toBe(400);
+      });
+
+      it("Should say that 'price' must be a number", () => {
+        expect(response.body.message).toBe('"price" must be a number');
+      });
+    });
+
+    context("With thirdInvalidReqBody (no fields provided)", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .patch(`/call/${(createdCall as ICall)._id}`)
+          .set("Authorization", `Bearer ${accessToken}`)
+          .send(thirdInvalidReqBody);
+      });
+
+      it("Should return a 400 status code", () => {
+        expect(response.status).toBe(400);
+      });
+
+      it("Should say that at least 1 field is required", () => {
+        expect(response.body.message).toBe('"value" must have at least 1 key');
+      });
+    });
+
+    context("With fourthInvalidReqBody (extra field provided)", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .patch(`/call/${(createdCall as ICall)._id}`)
+          .set("Authorization", `Bearer ${accessToken}`)
+          .send(fourthInvalidReqBody);
+      });
+
+      it("Should return a 400 status code", () => {
+        expect(response.status).toBe(400);
+      });
+
+      it("Should say that 'extra' is not allowed", () => {
+        expect(response.body.message).toBe('"extra" is not allowed');
+      });
+    });
+
+    context(
+      "With fifthInvalidReqBody (setting 'price' with 'work' category)",
+      () => {
+        beforeAll(async () => {
+          response = await supertest(app)
+            .patch(`/call/${(createdCall as ICall)._id}`)
+            .set("Authorization", `Bearer ${accessToken}`)
+            .send(fifthInvalidReqBody);
+        });
+
+        it("Should return a 400 status code", () => {
+          expect(response.status).toBe(400);
+        });
+
+        it("Should say that 'price' can't be set with new 'work' category", () => {
+          expect(response.body.message).toBe(
+            `Can't set price for ${Categories.WORK} category. Must be 0`
+          );
+        });
+      }
+    );
+
+    context("With sixthInvalidReqBody (invalid 'category')", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .patch(`/call/${(createdCall as ICall)._id}`)
+          .set("Authorization", `Bearer ${accessToken}`)
+          .send(sixthInvalidReqBody);
+      });
+
+      it("Should return a 400 status code", () => {
+        expect(response.status).toBe(400);
+      });
+
+      it("Should say that 'category' is invalid", () => {
+        expect(response.body.message).toBe(
+          '"category" must be one of [business and services, electronics, free, property, recreation and sport, trade, transport, work]'
+        );
+      });
+    });
+
+    context("With seventhInvalidReqBody (invalid 'phone' format)", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .patch(`/call/${(createdCall as ICall)._id}`)
+          .set("Authorization", `Bearer ${accessToken}`)
+          .send(seventhInvalidReqBody);
+      });
+
+      it("Should return a 400 status code", () => {
+        expect(response.status).toBe(400);
+      });
+
+      it("Should say that 'category' is invalid", () => {
+        expect(response.body.message).toBe(
+          "Invalid 'phone'. Please, use +380000000000 format"
+        );
+      });
+    });
+
+    context("With eighthInvalidReqBody (setting the same 'price')", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .patch(`/call/${(createdCall as ICall)._id}`)
+          .set("Authorization", `Bearer ${accessToken}`)
+          .send(eighthInvalidReqBody);
+      });
+
+      it("Should return a 400 status code", () => {
+        expect(response.status).toBe(400);
+      });
+
+      it("Should say that same 'price' cannot be set", () => {
+        expect(response.body.message).toBe("Can't set the same price");
+      });
+    });
+
+    context("Without providing 'accessToken'", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .patch(`/call/${(createdCall as ICall)._id}`)
+          .send(validReqBody);
+      });
+
+      it("Should return a 400 status code", () => {
+        expect(response.status).toBe(400);
+      });
+
+      it("Should say that token wasn't provided", () => {
+        expect(response.body.message).toBe("No token provided");
+      });
+    });
+
+    context("With invalid 'accessToken'", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .patch(`/call/${(createdCall as ICall)._id}`)
+          .send(validReqBody)
+          .set("Authorization", `Bearer qwerty123`);
+      });
+
+      it("Should return a 401 status code", () => {
+        expect(response.status).toBe(401);
+      });
+
+      it("Should return an unauthorized status", () => {
+        expect(response.body.message).toBe("Unauthorized");
+      });
+    });
+
+    context("With another account", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .patch(`/call/${(createdCall as ICall)._id}`)
+          .set("Authorization", `Bearer ${secondAccessToken}`)
+          .send(validReqBody);
+      });
+
+      it("Should return a 404 status code", () => {
+        expect(response.status).toBe(404);
+      });
+
+      it("Should say that call wasn't found", () => {
+        expect(response.body.message).toEqual("Call not found");
+      });
+    });
+  });
+
+  describe("GET /call/own", () => {
+    let response: Response;
+
+    context("Valid request", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .get(`/call/own`)
+          .set("Authorization", `Bearer ${accessToken}`);
+        createdUser = await UserModel.findById({
+          _id: (createdUser as IUser)._id,
+        }).lean();
+      });
+
+      it("Should return a 200 status code", () => {
+        expect(response.status).toBe(200);
+      });
+
+      it("Should return an expected result", () => {
+        expect(response.body).toEqual({
+          favourites: (createdUser as IUser).calls.map((call) => {
+            (call._id = call._id.toString()),
+              (call.userId = call.userId.toString());
+            return call;
+          }),
+        });
+      });
+    });
+
+    context("Without providing 'accessToken'", () => {
+      beforeAll(async () => {
+        response = await supertest(app).get(`/call/own`);
+      });
+
+      it("Should return a 400 status code", () => {
+        expect(response.status).toBe(400);
+      });
+
+      it("Should say that token wasn't provided", () => {
+        expect(response.body.message).toBe("No token provided");
+      });
+    });
+
+    context("With invalid 'accessToken'", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .get(`/call/own`)
+          .set("Authorization", `Bearer qwerty123`);
+      });
+
+      it("Should return a 401 status code", () => {
+        expect(response.status).toBe(401);
+      });
+
+      it("Should return an unauthorized status", () => {
+        expect(response.body.message).toBe("Unauthorized");
+      });
+    });
+  });
+
+  describe("DELETE /call/:callId", () => {
+    let response: Response;
+    let deletedCall: ICall | null;
+
+    context("Without providing 'accessToken'", () => {
+      beforeAll(async () => {
+        response = await supertest(app).delete(
+          `/call/${(createdCall as ICall)._id}`
+        );
+      });
+
+      it("Should return a 400 status code", () => {
+        expect(response.status).toBe(400);
+      });
+
+      it("Should say that token wasn't provided", () => {
+        expect(response.body.message).toBe("No token provided");
+      });
+    });
+
+    context("With invalid 'accessToken'", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .delete(`/call/${(createdCall as ICall)._id}`)
+          .set("Authorization", `Bearer qwerty123`);
+      });
+
+      it("Should return a 401 status code", () => {
+        expect(response.status).toBe(401);
+      });
+
+      it("Should return an unauthorized status", () => {
+        expect(response.body.message).toBe("Unauthorized");
+      });
+    });
+
+    context("With invalid 'callId'", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .delete("/call/qwerty123")
+          .set("Authorization", `Bearer ${accessToken}`);
+      });
+
+      it("Should return a 400 status code", () => {
+        expect(response.status).toBe(400);
+      });
+
+      it("Should say that 'callId' is invalid", () => {
+        expect(response.body.message).toBe(
+          "Invalid 'callId'. Must be a MongoDB ObjectId"
+        );
+      });
+    });
+
+    context("With another account", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .delete(`/call/${(createdCall as ICall)._id}`)
+          .set("Authorization", `Bearer ${secondAccessToken}`);
+      });
+
+      it("Should return a 404 status code", () => {
+        expect(response.status).toBe(404);
+      });
+
+      it("Should say that call wasn't found", () => {
+        expect(response.body.message).toBe("Call not found");
+      });
+    });
+
+    context("Valid request", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .delete(`/call/${(createdCall as ICall)._id}`)
+          .set("Authorization", `Bearer ${accessToken}`);
+        deletedCall = await CallModel.findOne({
+          _id: (createdCall as ICall)._id,
+        });
+        createdUser = await UserModel.findOne({
+          _id: (createdUser as IUser)._id,
+        });
+      });
+
+      it("Should return a 204 status code", () => {
+        expect(response.status).toBe(204);
+      });
+
+      it("Should delete call from DB", () => {
+        expect(deletedCall).toBeFalsy();
+      });
+
+      it("Should delete call from user's calls", () => {
+        expect(
+          (createdUser as IUser).calls.find(
+            (call) =>
+              call._id.toString() === (createdCall as ICall)._id.toString()
+          )
+        ).toBeFalsy();
+      });
+    });
+  });
+
+  describe("GET /call?page={page}", () => {
+    let response: Response;
+    let sales: ICall[] | null;
+    let recreationAndSport: ICall[] | null;
+    let free: ICall[] | null;
+    let businessAndServices: ICall[] | null;
+
+    context("Valid request", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .get(`/call?page=1`)
+          .set("Authorization", `Bearer ${accessToken}`);
+        sales = await CallModel.find({ isOnSale: true });
+        recreationAndSport = await CallModel.find({
+          category: Categories.RECREATION_AND_SPORT,
+        });
+        free = await CallModel.find({
+          category: Categories.FREE,
+        });
+        businessAndServices = await CallModel.find({
+          category: Categories.BUSINESS_AND_SERVICES,
+        });
+      });
+
+      it("Should return a 200 status code", () => {
+        expect(response.status).toBe(200);
+      });
+
+      it("Should return an expected result", () => {
+        expect(response.body).toEqual({
+          sales,
+          recreationAndSport,
+          free,
+          businessAndServices,
+        });
+      });
+    });
+
+    context("Invalid request (no query provided)", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .get(`/call`)
+          .set("Authorization", `Bearer ${accessToken}`);
+      });
+
+      it("Should return a 400 status code", () => {
+        expect(response.status).toBe(400);
+      });
+
+      it("Should say that query wasn't provided", () => {
+        expect(response.body.message).toBe('"page" is required');
+      });
+    });
+
+    context("Invalid request ('page' is invalid)", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .get(`/call?page=0`)
+          .set("Authorization", `Bearer ${accessToken}`);
+      });
+
+      it("Should return a 400 status code", () => {
+        expect(response.status).toBe(400);
+      });
+
+      it("Should say that 'page' must be below 3 and greater than 1", () => {
+        expect(response.body.message).toBe(
+          '"page" must be greater than or equal to 1'
+        );
+      });
+    });
+
+    context("Without providing 'accessToken'", () => {
+      beforeAll(async () => {
+        response = await supertest(app).get(`/call?page=1`);
+      });
+
+      it("Should return a 400 status code", () => {
+        expect(response.status).toBe(400);
+      });
+
+      it("Should say that token wasn't provided", () => {
+        expect(response.body.message).toBe("No token provided");
+      });
+    });
+
+    context("With invalid 'accessToken'", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .get(`/call?page=1`)
+          .set("Authorization", `Bearer qwerty123`);
+      });
+
+      it("Should return a 401 status code", () => {
+        expect(response.status).toBe(401);
+      });
+
+      it("Should return an unauthorized status", () => {
+        expect(response.body.message).toBe("Unauthorized");
       });
     });
   });

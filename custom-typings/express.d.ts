@@ -1,10 +1,10 @@
-import { Document } from "mongoose";
+import { IUser, ISession } from "../src/helpers/typescript-helpers/interfaces";
 
 declare global {
   namespace Express {
     interface Request {
-      user: Document | null;
-      session: Document | null;
+      user: IUser | null;
+      session: ISession | null;
       fileValidationError: string;
     }
   }

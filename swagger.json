@@ -9,7 +9,7 @@
       "url": "https://opensource.org/licenses/MIT"
     }
   },
-  "servers": [{ "url": "https://slimmom-backend.herokuapp.com" }],
+  "servers": [{ "url": "" }],
   "consumes": ["application/json"],
   "produces": ["application/json"],
   "tags": [
@@ -18,16 +18,12 @@
       "description": "Authorization endpoints"
     },
     {
+      "name": "User",
+      "description": "User endpoints"
+    },
+    {
       "name": "Call",
       "description": "Call endpoints"
-    },
-    {
-      "name": "Product-search",
-      "description": "Product-search endpoints"
-    },
-    {
-      "name": "Day",
-      "description": "Day endpoints"
     }
   ],
   "paths": {
@@ -135,16 +131,9 @@
     "/auth/refresh": {
       "post": {
         "tags": ["Auth"],
-        "summary": "Get new pair of tokens",
-        "parameters": [
-          {
-            "name": "Refresh token",
-            "description": "'refreshToken' field you get after authentication",
-            "in": "header",
-            "type": "string",
-            "required": true
-          }
-        ],
+        "summary": "Get new pair of tokens (use Bearer {refreshToken} instead of accessToken)",
+        "security": [{ "Bearer": [] }],
+        "parameters": [],
         "requestBody": {
           "description": "Request body with session's id",
           "content": {
@@ -198,6 +187,33 @@
         }
       }
     },
+    "/user": {
+      "get": {
+        "tags": ["User"],
+        "summary": "Get user's information",
+        "security": [{ "Bearer": [] }],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetUser"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No token provided",
+            "content": {}
+          },
+          "401": {
+            "description": "Unauthorized (invalid access token)",
+            "content": {}
+          }
+        }
+      }
+    },
     "/call": {
       "post": {
         "tags": ["Call"],
@@ -227,7 +243,7 @@
             }
           },
           "400": {
-            "description": "Bad request (invalid request body) / No token provided",
+            "description": "Bad request (invalid request body) / No token provided / More than 5 images provided / No images provided / Setting a price for: Free, work or trade category",
             "content": {}
           },
           "401": {
@@ -243,9 +259,91 @@
             "content": {}
           }
         }
+      },
+      "get": {
+        "tags": ["Call"],
+        "summary": "Get pages with categories by query pagination",
+        "security": [{ "Bearer": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Number of the page you want to load (1-3)",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetCalls"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (invalid query) / No token provided",
+            "content": {}
+          },
+          "401": {
+            "description": "Unauthorized (invalid access token)",
+            "content": {}
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Call"],
+        "summary": "Edit call",
+        "security": [{ "Bearer": [] }],
+        "parameters": [
+          {
+            "name": "callId",
+            "in": "path",
+            "description": "Call's id ('id' field in call's object)",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "requestBody": {
+          "description": "Call's object (at least 1 field is required)",
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchCallRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (invalid request body or id) / No token provided / Setting the same price / More than 5 images provided / Setting a price for: Free, work or trade category",
+            "content": {}
+          },
+          "401": {
+            "description": "Unauthorized (invalid access token)",
+            "content": {}
+          },
+          "404": {
+            "description": "Call not found / Invalid user / Invalid session",
+            "content": {}
+          }
+        }
       }
     },
-    "/call/favourites/{callId}": {
+    "/call/favourite/{callId}": {
       "post": {
         "tags": ["Call"],
         "summary": "Add call to favourites",
@@ -271,7 +369,7 @@
             }
           },
           "400": {
-            "description": "Invalid request body / No token provided",
+            "description": "Bad request (invalid id) / No token provided",
             "content": {}
           },
           "401": {
@@ -287,79 +385,97 @@
             "content": {}
           }
         }
-      }
-    },
-    "/daily-rate/{userId}": {
-      "post": {
-        "tags": ["Daily-rate"],
-        "summary": "Post your characteristics to the website and get daily rate information",
+      },
+      "delete": {
+        "tags": ["Call"],
+        "summary": "Remove call from favourites",
         "security": [{ "Bearer": [] }],
         "parameters": [
           {
-            "name": "userId",
+            "name": "callId",
             "in": "path",
-            "description": "Id of the user",
+            "description": "Call's id ('id' field in call's object)",
             "required": true,
             "type": "string"
           }
         ],
-        "requestBody": {
-          "description": "Object with user's characteristics",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DailyRateRequest"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Successful operation",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DailyRateWithUserIdResponse"
+                  "$ref": "#/components/schemas/FavouritesResponse"
                 }
               }
             }
           },
           "400": {
-            "description": "No token provided",
+            "description": "Bad request (invalid id) / No token provided",
             "content": {}
           },
           "401": {
             "description": "Unauthorized (invalid access token)",
             "content": {}
           },
+          "403": {
+            "description": "Not in favourites",
+            "content": {}
+          },
           "404": {
-            "description": "Invalid user / Invalid session",
+            "description": "Call not found / Invalid user / Invalid session",
             "content": {}
           }
         }
       }
     },
-    "/product": {
-      "get": {
-        "tags": ["Product-search"],
-        "summary": "Search and get a list of products by query",
+    "/call/{callId}": {
+      "delete": {
+        "tags": ["Call"],
+        "summary": "Delete user's call",
         "security": [{ "Bearer": [] }],
         "parameters": [
           {
-            "name": "search",
-            "in": "query",
-            "description": "Name of the product (in russian) you want to find",
-            "required": true
+            "name": "callId",
+            "in": "path",
+            "description": "Call's id ('id' field in call's object)",
+            "required": true,
+            "type": "string"
           }
         ],
+        "responses": {
+          "204": {
+            "description": "Successful operation",
+            "content": {}
+          },
+          "400": {
+            "description": "Bad request (invalid id) / No token provided",
+            "content": {}
+          },
+          "401": {
+            "description": "Unauthorized (invalid access token)",
+            "content": {}
+          },
+          "404": {
+            "description": "Call not found / Invalid user / Invalid session",
+            "content": {}
+          }
+        }
+      }
+    },
+    "/call/favourites": {
+      "get": {
+        "tags": ["Call"],
+        "summary": "Get user's favourites",
+        "security": [{ "Bearer": [] }],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Successful operation",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProductResponse"
+                  "$ref": "#/components/schemas/FavouritesResponse"
                 }
               }
             }
@@ -371,136 +487,33 @@
           "401": {
             "description": "Unauthorized (invalid access token)",
             "content": {}
-          },
-          "404": {
-            "description": "Invalid query name / Invalid user / Invalid session",
-            "content": {}
           }
         }
       }
     },
-    "/day": {
-      "post": {
-        "tags": ["Day"],
-        "summary": "Post an eaten product",
+    "/call/own": {
+      "get": {
+        "tags": ["Call"],
+        "summary": "Get user's calls",
         "security": [{ "Bearer": [] }],
         "parameters": [],
-        "requestBody": {
-          "description": "Object with date and eaten product's id",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PostDayRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful operation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PostDayResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request (invalid request body) / No token provided",
-            "content": {}
-          },
-          "401": {
-            "description": "Unauthorized (invalid access token)",
-            "content": {}
-          },
-          "404": {
-            "description": "Product not found / Habit not found / Invalid user / Invalid session",
-            "content": {}
-          }
-        }
-      },
-      "delete": {
-        "tags": ["Day"],
-        "summary": "Delete eaten product",
-        "security": [{ "Bearer": [] }],
-        "parameters": [],
-        "requestBody": {
-          "description": "Object with eaten product's id you want to delete",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DeleteDayRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful operation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DeleteDayResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request (invalid request body) / No token provided",
-            "content": {}
-          },
-          "401": {
-            "description": "Unauthorized (invalid access token)",
-            "content": {}
-          },
-          "404": {
-            "description": "Product not found / Day not found / Invalid user / Invalid session",
-            "content": {}
-          }
-        }
-      }
-    },
-    "/day/info": {
-      "post": {
-        "tags": ["Day"],
-        "summary": "Get info for day",
-        "security": [{ "Bearer": [] }],
-        "parameters": [],
-        "requestBody": {
-          "description": "Object with date of the day you want to get info for",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GetDayRequest"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
-            "description": "Successful operation / No such day found",
+            "description": "Successful operation",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetDayResponse"
+                  "$ref": "#/components/schemas/GetOwn"
                 }
               }
             }
           },
           "400": {
-            "description": "Bad request (invalid request body) / No token provided",
+            "description": "No token provided",
             "content": {}
           },
           "401": {
             "description": "Unauthorized (invalid access token)",
-            "content": {}
-          },
-          "404": {
-            "description": "Invalid user / Invalid session",
             "content": {}
           }
         }
@@ -587,6 +600,11 @@
                 "type": "string",
                 "description": "User's email",
                 "format": "email"
+              },
+              "registrationDate": {
+                "type": "string",
+                "description": "User's registration date (YYYY-MM-DD format)",
+                "example": "2020-12-31"
               },
               "id": {
                 "type": "string",
@@ -733,6 +751,7 @@
       },
       "RefreshTokensRequest": {
         "type": "object",
+        "required": ["sid"],
         "properties": {
           "sid": {
             "type": "string",
@@ -758,6 +777,160 @@
             "type": "string",
             "description": "New session's id",
             "example": "507f1f77bcf86cd799439011"
+          }
+        }
+      },
+      "GetUser": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "User's email",
+            "format": "email"
+          },
+          "id": {
+            "type": "string",
+            "description": "User's id",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "registrationDate": {
+            "type": "string",
+            "description": "User's registration date (YYYY-MM-DD format)",
+            "example": "2020-12-31"
+          },
+          "favourites": {
+            "type": "array",
+            "description": "User's favourite calls",
+            "items": {
+              "type": "object",
+              "description": "User's favourite call",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "Call's title",
+                  "example": "Red Shirt"
+                },
+                "imageUrls": {
+                  "type": "array",
+                  "description": "Call's image URLs",
+                  "items": {
+                    "type": "string",
+                    "description": "Image URL"
+                  }
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Call's description",
+                  "example": "New red shirt, made from cotton"
+                },
+                "category": {
+                  "type": "string",
+                  "description": "Call's category",
+                  "example": "Trade"
+                },
+                "price": {
+                  "type": "integer",
+                  "description": "Call's price",
+                  "example": 0
+                },
+                "oldPrice": {
+                  "oneOf": [{ "type": "string" }, { "type": "null" }],
+                  "description": "Call's old price (if was changed and became lower)",
+                  "example": null
+                },
+                "isOnSale": {
+                  "type": "boolean",
+                  "description": "Call's sale status",
+                  "example": false
+                },
+                "discountPercents": {
+                  "oneOf": [{ "type": "string" }, { "type": "null" }],
+                  "description": "Call's discount percents (if on sale)",
+                  "example": null
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Call author's phone",
+                  "example": "+380000000000"
+                },
+                "_id": {
+                  "type": "string",
+                  "description": "Call's id",
+                  "example": "507f1f77bcf86cd799439012"
+                },
+                "__v": {
+                  "type": "integer",
+                  "description": "MongoDB' document's service versionKey (ignore)"
+                }
+              }
+            }
+          },
+          "calls": {
+            "type": "array",
+            "description": "User's favourite calls",
+            "items": {
+              "type": "object",
+              "description": "User's favourite call",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "Call's title",
+                  "example": "Tesla Model X"
+                },
+                "imageUrls": {
+                  "type": "array",
+                  "description": "Call's image URLs",
+                  "items": {
+                    "type": "string",
+                    "description": "Image URL"
+                  }
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Call's description",
+                  "example": "New tesla"
+                },
+                "category": {
+                  "type": "string",
+                  "description": "Call's category",
+                  "example": "Transport"
+                },
+                "price": {
+                  "type": "number",
+                  "description": "Call's price",
+                  "example": 1500000
+                },
+                "oldPrice": {
+                  "oneOf": [{ "type": "string" }, { "type": "null" }],
+                  "description": "Call's old price (if was changed and became lower)",
+                  "example": 1750000
+                },
+                "isOnSale": {
+                  "type": "boolean",
+                  "description": "Call's sale status",
+                  "example": true
+                },
+                "discountPercents": {
+                  "oneOf": [{ "type": "string" }, { "type": "null" }],
+                  "description": "Call's discount percents (if on sale)",
+                  "example": 14.28571428571429
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Call author's phone",
+                  "example": "+380000000000"
+                },
+                "_id": {
+                  "type": "string",
+                  "description": "Call's id",
+                  "example": "507f1f77bcf86cd799439013"
+                },
+                "__v": {
+                  "type": "integer",
+                  "description": "MongoDB' document's service versionKey (ignore)"
+                }
+              }
+            }
           }
         }
       },
@@ -932,481 +1105,427 @@
           }
         }
       },
-      "DailyRateRequest": {
-        "required": ["weight", "height", "age", "desiredWeight", "bloodType"],
+      "PatchCallRequest": {
         "type": "object",
+        "description": "Call's object",
         "properties": {
-          "weight": {
-            "type": "number",
-            "description": "User's weight (kg)",
-            "minimum": 20,
-            "maximum": 500,
-            "example": 100
-          },
-          "height": {
-            "type": "number",
-            "description": "User's height (cm)",
-            "minimum": 100,
-            "maximum": 250,
-            "example": 170
-          },
-          "age": {
-            "type": "number",
-            "description": "User's age",
-            "minimum": 18,
-            "maximum": 100,
-            "example": 30
-          },
-          "desiredWeight": {
-            "type": "number",
-            "description": "User's desired weight",
-            "minimum": 20,
-            "maximum": 500,
-            "example": 60
-          },
-          "bloodType": {
-            "type": "number",
-            "description": "User's blood type",
-            "enum": [1, 2, 3, 4]
-          }
-        }
-      },
-      "DailyRateResponse": {
-        "type": "object",
-        "properties": {
-          "dailyRate": {
-            "type": "number",
-            "description": "Daily rate in kcal",
-            "example": 1351.5
-          },
-          "notAllowedProducts": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "description": "Not allowed product",
-              "example": ["Яйцо куриное (желток сухой)"]
-            }
-          }
-        }
-      },
-      "DailyRateWithUserIdResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
+          "title": {
             "type": "string",
-            "description": "User's id",
-            "example": "507f1f77bcf86cd799439011"
+            "description": "Call's title",
+            "example": "Red Shirt"
           },
-          "dailyRate": {
-            "type": "number",
-            "description": "Daily rate in kcal",
-            "example": 1351.5
+          "description": {
+            "type": "string",
+            "description": "Call's description",
+            "example": "New red shirt, made from cotton"
           },
-          "summaries": {
+          "category": {
+            "type": "string",
+            "description": "Call's category",
+            "example": "Trade"
+          },
+          "price": {
+            "type": "integer",
+            "description": "Call's price",
+            "example": 0
+          },
+          "phone": {
+            "type": "string",
+            "description": "Call author's phone",
+            "example": "+380000000000"
+          },
+          "file": {
+            "type": "string",
+            "description": "Call's image (could be more than one, maximum 5)",
+            "format": "binary"
+          }
+        }
+      },
+      "GetCalls": {
+        "type": "object",
+        "description": "Page of categories with calls",
+        "properties": {
+          "sales": {
             "type": "array",
+            "description": "Sales category",
             "items": {
               "type": "object",
-              "description": "Updated summary",
+              "description": "Sales category call",
               "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "Call's title",
+                  "example": "Tesla Model X"
+                },
+                "imageUrls": {
+                  "type": "array",
+                  "description": "Call's image URLs",
+                  "items": {
+                    "type": "string",
+                    "description": "Image URL"
+                  }
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Call's description",
+                  "example": "New tesla"
+                },
+                "category": {
+                  "type": "string",
+                  "description": "Call's category",
+                  "example": "Transport"
+                },
+                "price": {
+                  "type": "number",
+                  "description": "Call's price",
+                  "example": 1500000
+                },
+                "oldPrice": {
+                  "oneOf": [{ "type": "string" }, { "type": "null" }],
+                  "description": "Call's old price (if was changed and became lower)",
+                  "example": 1750000
+                },
+                "isOnSale": {
+                  "type": "boolean",
+                  "description": "Call's sale status",
+                  "example": true
+                },
+                "discountPercents": {
+                  "oneOf": [{ "type": "string" }, { "type": "null" }],
+                  "description": "Call's discount percents (if on sale)",
+                  "example": 14.28571428571429
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Call author's phone",
+                  "example": "+380000000000"
+                },
                 "_id": {
                   "type": "string",
-                  "description": "Day's id",
-                  "example": "507f1f77bcf86cd799439012"
-                },
-                "date": {
-                  "type": "string",
-                  "description": "Day's date",
-                  "example": "2020-12-31"
-                },
-                "kcalLeft": {
-                  "type": "number",
-                  "description": "Kcal left to consume",
-                  "example": 1000
-                },
-                "kcalConsumed": {
-                  "type": "number",
-                  "description": "Kcal consumed",
-                  "example": 1000
-                },
-                "dailyRate": {
-                  "type": "number",
-                  "description": "Daily rate in kcal",
-                  "example": 2000
-                },
-                "percentsOfDailyRate": {
-                  "type": "number",
-                  "description": "Percents consumed of daily rate",
-                  "example": 50
-                },
-                "userId": {
-                  "type": "string",
-                  "description": "User's id",
+                  "description": "Call's id",
                   "example": "507f1f77bcf86cd799439013"
                 },
                 "__v": {
                   "type": "integer",
-                  "description": "MongoDB document service versionKey (ignore)"
+                  "description": "MongoDB' document's service versionKey (ignore)"
                 }
               }
             }
           },
-          "notAllowedProducts": {
+          "recreationAndSport": {
             "type": "array",
-            "description": "User's not allowed products (based on blood type)",
-            "items": {
-              "type": "string",
-              "description": "Not allowed product",
-              "example": ["Яйцо куриное (желток сухой)"]
-            }
-          }
-        }
-      },
-      "ProductResponse": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-            "_id": {
-              "type": "string",
-              "description": "Product's id",
-              "example": "507f1f77bcf86cd799439011"
-            },
-            "categories": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "description": "Product's category",
-                "example": "яйца"
-              }
-            },
-            "weight": {
-              "type": "number",
-              "description": "Product's weight (100g)",
-              "example": 100
-            },
-            "title": {
-              "type": "object",
-              "description": "Product's russian and ukrainian titles",
-              "properties": {
-                "ru": {
-                  "type": "string",
-                  "example": "Меланж яичный"
-                },
-                "ua": {
-                  "type": "string",
-                  "example": "Меланж яєчний"
-                }
-              }
-            },
-            "calories": {
-              "type": "number",
-              "description": "Product's kcal for 100g",
-              "example": 157
-            },
-            "groupBloodNotAllowed": {
-              "type": "array",
-              "description": "Product's allowed/not allowed status on all blood types (first item is null - 0 index in array)",
-              "items": {
-                "oneOf": [{ "type": "null" }, { "type": "boolean" }]
-              },
-              "example": [null, true, false, false, false]
-            },
-            "__v": {
-              "type": "integer",
-              "description": "MongoDB document service versionKey (ignore)"
-            }
-          }
-        }
-      },
-      "PostDayRequest": {
-        "type": "object",
-        "required": ["date", "productId", "weight"],
-        "properties": {
-          "date": {
-            "type": "string",
-            "description": "Day's date",
-            "example": "2020-12-31"
-          },
-          "productId": {
-            "type": "string",
-            "description": "Product's id",
-            "example": "5d51694802b2373622ff552c"
-          },
-          "weight": {
-            "type": "number",
-            "description": "Product's weight",
-            "example": 100
-          }
-        }
-      },
-      "PostDayResponse": {
-        "type": "object",
-        "properties": {
-          "eatenProduct": {
-            "type": "object",
-            "properties": {
-              "title": {
-                "type": "string",
-                "description": "Eaten product's description",
-                "example": "Меланж яичный"
-              },
-              "weight": {
-                "type": "number",
-                "description": "Eaten product's weight",
-                "example": 100
-              },
-              "kcal": {
-                "type": "number",
-                "description": "kcal consumed",
-                "example": 157
-              },
-              "id": {
-                "type": "string",
-                "description": "Eaten product's id",
-                "example": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
-              }
-            }
-          },
-          "day": {
-            "type": "object",
-            "description": "Day (or newDay) when the product was eaten",
-            "properties": {
-              "id": {
-                "type": "string",
-                "description": "Day's id",
-                "example": "507f1f77bcf86cd799439011"
-              },
-              "eatenProducts": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "title": {
-                      "type": "string",
-                      "description": "Eaten product's description",
-                      "example": "Меланж яичный"
-                    },
-                    "weight": {
-                      "type": "number",
-                      "description": "Eaten product's weight",
-                      "example": 100
-                    },
-                    "kcal": {
-                      "type": "number",
-                      "description": "kcal consumed",
-                      "example": 157
-                    },
-                    "id": {
-                      "type": "string",
-                      "description": "Eaten product's id",
-                      "example": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
-                    }
-                  }
-                }
-              },
-              "date": {
-                "type": "string",
-                "description": "Day's date",
-                "example": "2020-12-31"
-              },
-              "daySummary": {
-                "type": "ObjectId",
-                "description": "Id of the day's summary",
-                "example": "507f1f77bcf86cd799439011"
-              }
-            }
-          },
-          "daySummary": {
-            "type": "object",
-            "description": "Updated summary (or newSummary)",
-            "properties": {
-              "date": {
-                "type": "string",
-                "description": "Day's date",
-                "example": "2020-12-31"
-              },
-              "kcalLeft": {
-                "type": "number",
-                "description": "Kcal left to consume",
-                "example": 1194.5
-              },
-              "kcalConsumed": {
-                "type": "number",
-                "description": "Kcal consumed",
-                "example": 157
-              },
-              "dailyRate": {
-                "type": "number",
-                "description": "Daily rate in kcal",
-                "example": 1351.5
-              },
-              "percentsOfDailyRate": {
-                "type": "number",
-                "description": "Percents consumed of daily rate",
-                "example": 11.616722160562338
-              },
-              "userId": {
-                "type": "string",
-                "description": "User's id",
-                "example": "507f1f77bcf86cd799439012"
-              },
-              "id": {
-                "type": "string",
-                "description": "Day's id",
-                "example": "507f1f77bcf86cd799439011"
-              }
-            }
-          }
-        }
-      },
-      "DeleteDayRequest": {
-        "type": "object",
-        "required": ["dayId", "eatenProductId"],
-        "properties": {
-          "dayId": {
-            "type": "string",
-            "description": "Day's id",
-            "example": "507f1f77bcf86cd799439011"
-          },
-          "eatenProductId": {
-            "type": "string",
-            "description": "Eaten product's id",
-            "example": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
-          }
-        }
-      },
-      "DeleteDayResponse": {
-        "type": "object",
-        "description": "Updated summary",
-        "properties": {
-          "date": {
-            "type": "string",
-            "description": "Day's date",
-            "example": "2020-12-31"
-          },
-          "kcalLeft": {
-            "type": "number",
-            "description": "Kcal left to consume",
-            "example": 1000
-          },
-          "kcalConsumed": {
-            "type": "number",
-            "description": "Kcal consumed",
-            "example": 1000
-          },
-          "dailyRate": {
-            "type": "number",
-            "description": "Daily rate in kcal",
-            "example": 2000
-          },
-          "percentsOfDailyRate": {
-            "type": "number",
-            "description": "Percents consumed of daily rate",
-            "example": 50
-          },
-          "userId": {
-            "type": "string",
-            "description": "User's id",
-            "example": "507f1f77bcf86cd799439011"
-          },
-          "id": {
-            "type": "string",
-            "description": "Day's id",
-            "example": "507f1f77bcf86cd799439012"
-          }
-        }
-      },
-      "GetDayRequest": {
-        "type": "object",
-        "required": ["date"],
-        "properties": {
-          "date": {
-            "type": "string",
-            "description": "Day's date",
-            "example": "2020-12-31"
-          }
-        }
-      },
-      "GetDayResponse": {
-        "type": "object",
-        "description": "Day (or newDay) when the product was eaten",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Day's id",
-            "example": "507f1f77bcf86cd799439011"
-          },
-          "eatenProducts": {
-            "type": "array",
+            "description": "Recreration and sport category",
             "items": {
               "type": "object",
+              "description": "Recreration and sport category call",
               "properties": {
                 "title": {
                   "type": "string",
-                  "description": "Eaten product's description",
-                  "example": "Меланж яичный"
+                  "description": "Call's title",
+                  "example": "Tesla Model X"
                 },
-                "weight": {
-                  "type": "number",
-                  "description": "Eaten product's weight",
-                  "example": 100
+                "imageUrls": {
+                  "type": "array",
+                  "description": "Call's image URLs",
+                  "items": {
+                    "type": "string",
+                    "description": "Image URL"
+                  }
                 },
-                "kcal": {
-                  "type": "number",
-                  "description": "kcal consumed",
-                  "example": 157
-                },
-                "id": {
+                "description": {
                   "type": "string",
-                  "description": "Eaten product's id",
-                  "example": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+                  "description": "Call's description",
+                  "example": "New tesla"
+                },
+                "category": {
+                  "type": "string",
+                  "description": "Call's category",
+                  "example": "Transport"
+                },
+                "price": {
+                  "type": "number",
+                  "description": "Call's price",
+                  "example": 1500000
+                },
+                "isOnSale": {
+                  "type": "boolean",
+                  "description": "Call's sale status",
+                  "example": false
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Call author's phone",
+                  "example": "+380000000000"
+                },
+                "_id": {
+                  "type": "string",
+                  "description": "Call's id",
+                  "example": "507f1f77bcf86cd799439014"
+                },
+                "__v": {
+                  "type": "integer",
+                  "description": "MongoDB' document's service versionKey (ignore)"
                 }
               }
             }
           },
-          "date": {
-            "type": "string",
-            "description": "Day's date",
-            "example": "2020-12-31"
+          "free": {
+            "type": "array",
+            "description": "Free category",
+            "items": {
+              "type": "object",
+              "description": "Free category call",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "Call's title",
+                  "example": "Tesla Model X"
+                },
+                "imageUrls": {
+                  "type": "array",
+                  "description": "Call's image URLs",
+                  "items": {
+                    "type": "string",
+                    "description": "Image URL"
+                  }
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Call's description",
+                  "example": "New tesla"
+                },
+                "category": {
+                  "type": "string",
+                  "description": "Call's category",
+                  "example": "Transport"
+                },
+                "price": {
+                  "type": "number",
+                  "description": "Call's price",
+                  "example": 0
+                },
+                "isOnSale": {
+                  "type": "boolean",
+                  "description": "Call's sale status",
+                  "example": false
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Call author's phone",
+                  "example": "+380000000000"
+                },
+                "_id": {
+                  "type": "string",
+                  "description": "Call's id",
+                  "example": "507f1f77bcf86cd799439015"
+                },
+                "__v": {
+                  "type": "integer",
+                  "description": "MongoDB' document's service versionKey (ignore)"
+                }
+              }
+            }
           },
-          "daySummary": {
-            "type": "object",
-            "description": "Day's summary",
-            "properties": {
-              "id": {
-                "type": "string",
-                "description": "Day's id",
-                "example": "507f1f77bcf86cd799439011"
-              },
-              "date": {
-                "type": "string",
-                "description": "Day's date",
-                "example": "2020-12-31"
-              },
-              "kcalLeft": {
-                "type": "number",
-                "description": "Kcal left to consume",
-                "example": 1194.5
-              },
-              "kcalConsumed": {
-                "type": "number",
-                "description": "Kcal consumed",
-                "example": 157
-              },
-              "dailyRate": {
-                "type": "number",
-                "description": "Daily rate in kcal",
-                "example": 1351.5
-              },
-              "percentsOfDailyRate": {
-                "type": "number",
-                "description": "Percents consumed of daily rate",
-                "example": 11.616722160562338
-              },
-              "userId": {
-                "type": "string",
-                "description": "User's id",
-                "example": "507f1f77bcf86cd799439012"
+          "businessAndServices": {
+            "type": "array",
+            "description": "Business and Services category",
+            "items": {
+              "type": "object",
+              "description": "Business and Services category call",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "Call's title",
+                  "example": "Tesla Model X"
+                },
+                "imageUrls": {
+                  "type": "array",
+                  "description": "Call's image URLs",
+                  "items": {
+                    "type": "string",
+                    "description": "Image URL"
+                  }
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Call's description",
+                  "example": "New tesla"
+                },
+                "category": {
+                  "type": "string",
+                  "description": "Call's category",
+                  "example": "Transport"
+                },
+                "price": {
+                  "type": "number",
+                  "description": "Call's price",
+                  "example": 1500000
+                },
+                "isOnSale": {
+                  "type": "boolean",
+                  "description": "Call's sale status",
+                  "example": false
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Call author's phone",
+                  "example": "+380000000000"
+                },
+                "_id": {
+                  "type": "string",
+                  "description": "Call's id",
+                  "example": "507f1f77bcf86cd799439016"
+                },
+                "__v": {
+                  "type": "integer",
+                  "description": "MongoDB' document's service versionKey (ignore)"
+                }
+              }
+            }
+          }
+        }
+      },
+      "GetFavourites": {
+        "type": "object",
+        "description": "User's favourites ",
+        "properties": {
+          "favourites": {
+            "type": "array",
+            "description": "User's favourite calls array",
+            "items": {
+              "type": "object",
+              "description": "User's favourite call",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "Call's title",
+                  "example": "Tesla Model X"
+                },
+                "imageUrls": {
+                  "type": "array",
+                  "description": "Call's image URLs",
+                  "items": {
+                    "type": "string",
+                    "description": "Image URL"
+                  }
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Call's description",
+                  "example": "New tesla"
+                },
+                "category": {
+                  "type": "string",
+                  "description": "Call's category",
+                  "example": "Transport"
+                },
+                "price": {
+                  "type": "number",
+                  "description": "Call's price",
+                  "example": 1500000
+                },
+                "oldPrice": {
+                  "oneOf": [{ "type": "string" }, { "type": "null" }],
+                  "description": "Call's old price (if was changed and became lower)",
+                  "example": 1750000
+                },
+                "isOnSale": {
+                  "type": "boolean",
+                  "description": "Call's sale status",
+                  "example": true
+                },
+                "discountPercents": {
+                  "oneOf": [{ "type": "string" }, { "type": "null" }],
+                  "description": "Call's discount percents (if on sale)",
+                  "example": 14.28571428571429
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Call author's phone",
+                  "example": "+380000000000"
+                },
+                "_id": {
+                  "type": "string",
+                  "description": "Call's id",
+                  "example": "507f1f77bcf86cd799439013"
+                },
+                "__v": {
+                  "type": "integer",
+                  "description": "MongoDB' document's service versionKey (ignore)"
+                }
+              }
+            }
+          }
+        }
+      },
+      "GetOwn": {
+        "type": "object",
+        "description": "User's favourites ",
+        "properties": {
+          "favourites": {
+            "type": "array",
+            "description": "User's favourite calls array",
+            "items": {
+              "type": "object",
+              "description": "User's favourite call",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "Call's title",
+                  "example": "Tesla Model X"
+                },
+                "imageUrls": {
+                  "type": "array",
+                  "description": "Call's image URLs",
+                  "items": {
+                    "type": "string",
+                    "description": "Image URL"
+                  }
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Call's description",
+                  "example": "New tesla"
+                },
+                "category": {
+                  "type": "string",
+                  "description": "Call's category",
+                  "example": "Transport"
+                },
+                "price": {
+                  "type": "number",
+                  "description": "Call's price",
+                  "example": 1500000
+                },
+                "oldPrice": {
+                  "oneOf": [{ "type": "string" }, { "type": "null" }],
+                  "description": "Call's old price (if was changed and became lower)",
+                  "example": 1750000
+                },
+                "isOnSale": {
+                  "type": "boolean",
+                  "description": "Call's sale status",
+                  "example": true
+                },
+                "discountPercents": {
+                  "oneOf": [{ "type": "string" }, { "type": "null" }],
+                  "description": "Call's discount percents (if on sale)",
+                  "example": 14.28571428571429
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Call author's phone",
+                  "example": "+380000000000"
+                },
+                "_id": {
+                  "type": "string",
+                  "description": "Call's id",
+                  "example": "507f1f77bcf86cd799439013"
+                },
+                "__v": {
+                  "type": "integer",
+                  "description": "MongoDB' document's service versionKey (ignore)"
+                }
               }
             }
           }

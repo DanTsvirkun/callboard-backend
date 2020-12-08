@@ -1,5 +1,5 @@
 import { Application } from "express";
-import mongoose, { Document } from "mongoose";
+import mongoose from "mongoose";
 import supertest, { Response } from "supertest";
 import jwt from "jsonwebtoken";
 import Server from "../server/server";
@@ -9,9 +9,9 @@ import { IUser, ISession } from "../helpers/typescript-helpers/interfaces";
 
 describe("Auth router test suite", () => {
   let app: Application;
-  let createdUser: Document | null;
-  let createdSession: Document | null;
-  let newSession: Document | null;
+  let createdUser: IUser | null;
+  let createdSession: ISession | null;
+  let newSession: ISession | null;
   let accessToken: string;
   let refreshToken: string;
 
@@ -273,7 +273,7 @@ describe("Auth router test suite", () => {
       });
     });
 
-    context("With thirdInvalidReqBody ('password' has the wrong type)", () => {
+    context("With thirdInvalidReqBody ('password' is not a string)", () => {
       beforeAll(async () => {
         response = await supertest(app)
           .post("/auth/login")
@@ -284,7 +284,7 @@ describe("Auth router test suite", () => {
         expect(response.status).toBe(400);
       });
 
-      it("Should say that 'password' is required", () => {
+      it("Should say that 'password' must be a string", () => {
         expect(response.body.message).toBe('"password" must be a string');
       });
     });
@@ -359,7 +359,7 @@ describe("Auth router test suite", () => {
         expect(createdSession).toBeFalsy();
       });
 
-      it("Should create a new session from DB", () => {
+      it("Should create a new session in DB", () => {
         expect(newSession).toBeTruthy();
       });
     });
@@ -423,7 +423,7 @@ describe("Auth router test suite", () => {
 
   describe("POST /auth/logout", () => {
     let response: Response;
-    let deletedSession: Document | null;
+    let deletedSession: ISession | null;
 
     context("Valid request", () => {
       beforeAll(async () => {

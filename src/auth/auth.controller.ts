@@ -1,12 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { Document } from "mongoose";
 import * as queryString from "query-string";
 import axios from "axios";
 import UserModel from "../REST-entities/user/user.model";
 import SessionModel from "../REST-entities/session/session.model";
-import { IUser, IJWTPayload } from "../helpers/typescript-helpers/interfaces";
+import {
+  ISession,
+  IJWTPayload,
+} from "../helpers/typescript-helpers/interfaces";
 
 export const register = async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -46,10 +48,7 @@ export const login = async (req: Request, res: Response) => {
       .status(403)
       .send({ message: `User with ${email} email doesn't exist` });
   }
-  const isPasswordCorrect = await bcrypt.compare(
-    password,
-    (user as IUser).passwordHash
-  );
+  const isPasswordCorrect = await bcrypt.compare(password, user.passwordHash);
   if (!isPasswordCorrect) {
     return res.status(403).send({ message: "Password is wrong" });
   }
@@ -75,11 +74,11 @@ export const login = async (req: Request, res: Response) => {
     refreshToken,
     sid: newSession._id,
     user: {
-      email: (user as IUser).email,
-      registrationDate: (user as IUser).registrationDate,
-      id: (user as IUser)._id,
-      favourites: (user as IUser).favourites,
-      calls: (user as IUser).calls,
+      email: user.email,
+      registrationDate: user.registrationDate,
+      id: user._id,
+      favourites: user.favourites,
+      calls: user.calls,
     },
   });
 };
@@ -160,7 +159,7 @@ export const refreshTokens = async (req: Request, res: Response) => {
 
 export const logout = async (req: Request, res: Response) => {
   const currentSession = req.session;
-  await SessionModel.deleteOne({ _id: (currentSession as Document)._id });
+  await SessionModel.deleteOne({ _id: (currentSession as ISession)._id });
   req.user = null;
   req.session = null;
   return res.status(204).end();
@@ -208,34 +207,30 @@ export const googleRedirect = async (
     },
   });
   let existingUser = await UserModel.findOne({ email: userData.data.email });
-  if (!existingUser || !(existingUser as IUser).originUrl) {
+  if (!existingUser || !existingUser.originUrl) {
     return res.status(403).send({
       message:
         "You should register from front-end first (not postman). Google is only for sign-in",
     });
   }
   const newSession = await SessionModel.create({
-    uid: (existingUser as IUser)._id,
+    uid: existingUser._id,
   });
   const accessToken = jwt.sign(
-    { uid: (existingUser as IUser)._id, sid: newSession._id },
+    { uid: existingUser._id, sid: newSession._id },
     process.env.JWT_SECRET as string,
     {
       expiresIn: process.env.JWT_ACCESS_EXPIRE_TIME,
     }
   );
   const refreshToken = jwt.sign(
-    { uid: (existingUser as IUser)._id, sid: newSession._id },
+    { uid: existingUser._id, sid: newSession._id },
     process.env.JWT_SECRET as string,
     {
       expiresIn: process.env.JWT_REFRESH_EXPIRE_TIME,
     }
   );
   return res.redirect(
-    `${
-      (existingUser as IUser).originUrl
-    }?accessToken=${accessToken}&refreshToken=${refreshToken}&sid=${
-      newSession._id
-    }`
+    `${existingUser.originUrl}?accessToken=${accessToken}&refreshToken=${refreshToken}&sid=${newSession._id}`
   );
 };
