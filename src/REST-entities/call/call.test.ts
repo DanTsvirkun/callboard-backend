@@ -67,11 +67,11 @@ describe("Call router test suite", () => {
           .field("phone", "+380000000000")
           .attach("file", path.join(__dirname, "./test-files/test.jpg"))
           .attach("file", path.join(__dirname, "./test-files/test.jpg"));
-        createdUser = await UserModel.findOne({
-          _id: (createdUser as IUser)._id,
-        }).lean();
         createdCall = await CallModel.findOne({
           userId: (createdUser as IUser)._id,
+        }).lean();
+        createdUser = await UserModel.findOne({
+          _id: (createdUser as IUser)._id,
         }).lean();
       });
 
@@ -1476,6 +1476,33 @@ describe("Call router test suite", () => {
 
       it("Should return an unauthorized status", () => {
         expect(response.body.message).toBe("Unauthorized");
+      });
+    });
+  });
+
+  describe("GET /call/categories", () => {
+    let response: Response;
+
+    context("Valid request", () => {
+      beforeAll(async () => {
+        response = await supertest(app).get(`/call/categories`);
+      });
+
+      it("Should return a 200 status code", () => {
+        expect(response.status).toBe(200);
+      });
+
+      it("Should return an expected result", () => {
+        expect(response.body).toEqual([
+          "property",
+          "transport",
+          "work",
+          "electronics",
+          "business and services",
+          "recreation and sport",
+          "free",
+          "trade",
+        ]);
       });
     });
   });

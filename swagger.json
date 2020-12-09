@@ -553,6 +553,25 @@
           }
         }
       }
+    },
+    "/call/categories": {
+      "get": {
+        "tags": ["Call"],
+        "summary": "Get a list of categories",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetCategories"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1632,6 +1651,24 @@
             }
           }
         }
+      },
+      "GetCategories": {
+        "type": "array",
+        "description": "All categories from server",
+        "items": {
+          "type": "string",
+          "description": "Category"
+        },
+        "example": [
+          "property",
+          "transport",
+          "work",
+          "electronics",
+          "business and services",
+          "recreation and sport",
+          "free",
+          "trade"
+        ]
       }
     },
     "securitySchemes": {

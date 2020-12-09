@@ -314,3 +314,11 @@ export const searchCalls = async (req: Request, res: Response) => {
   }).lean();
   return res.status(200).send(foundCalls);
 };
+
+export const getCategories = async (req: Request, res: Response) => {
+  const categories: string[] = [];
+  for (const category of Object.values(Categories)) {
+    categories.push(category);
+  }
+  res.status(200).send(categories);
+};

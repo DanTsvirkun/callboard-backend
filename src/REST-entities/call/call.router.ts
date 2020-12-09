@@ -14,6 +14,7 @@ import {
   getFavourites,
   getCalls,
   searchCalls,
+  getCategories,
 } from "./call.controller";
 import { multerMid } from "../../helpers/function-helpers/multer-config";
 import { Categories } from "../../helpers/typescript-helpers/enums";
@@ -143,5 +144,6 @@ router.get(
   validate(searchCallsSchema, "query"),
   tryCatchWrapper(searchCalls)
 );
+router.get("/categories", tryCatchWrapper(getCategories));
 
 export default router;
