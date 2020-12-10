@@ -139,7 +139,6 @@ router.get("/own", authorize, tryCatchWrapper(getCalls));
 router.get("/favourites", authorize, tryCatchWrapper(getFavourites));
 router.get(
   "/find",
-  authorize,
   validate(searchCallsSchema, "query"),
   tryCatchWrapper(searchCalls)
 );

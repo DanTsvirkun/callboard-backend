@@ -1199,9 +1199,7 @@ describe("Call router test suite", () => {
 
     context("Valid request", () => {
       beforeAll(async () => {
-        response = await supertest(app)
-          .get("/call/find?search=test")
-          .set("Authorization", `Bearer ${accessToken}`);
+        response = await supertest(app).get("/call/find?search=test");
       });
 
       it("Should return a 200 status code", () => {
@@ -1230,9 +1228,7 @@ describe("Call router test suite", () => {
 
     context("Without providing query", () => {
       beforeAll(async () => {
-        response = await supertest(app)
-          .get("/call/find")
-          .set("Authorization", `Bearer ${accessToken}`);
+        response = await supertest(app).get("/call/find");
       });
 
       it("Should return a 400 status code", () => {
@@ -1241,36 +1237,6 @@ describe("Call router test suite", () => {
 
       it("Should say that 'search' is required", () => {
         expect(response.body.message).toBe('"search" is required');
-      });
-    });
-
-    context("Without providing 'accessToken'", () => {
-      beforeAll(async () => {
-        response = await supertest(app).get("/call/find?search=test");
-      });
-
-      it("Should return a 400 status code", () => {
-        expect(response.status).toBe(400);
-      });
-
-      it("Should say that token wasn't provided", () => {
-        expect(response.body.message).toBe("No token provided");
-      });
-    });
-
-    context("With invalid 'accessToken'", () => {
-      beforeAll(async () => {
-        response = await supertest(app)
-          .get("/call/find?search=test")
-          .set("Authorization", `Bearer qwerty123`);
-      });
-
-      it("Should return a 401 status code", () => {
-        expect(response.status).toBe(401);
-      });
-
-      it("Should return an unauthorized status", () => {
-        expect(response.body.message).toBe("Unauthorized");
       });
     });
   });
@@ -1386,9 +1352,7 @@ describe("Call router test suite", () => {
 
     context("Valid request", () => {
       beforeAll(async () => {
-        response = await supertest(app)
-          .get(`/call?page=1`)
-          .set("Authorization", `Bearer ${accessToken}`);
+        response = await supertest(app).get(`/call?page=1`);
         sales = await CallModel.find({ isOnSale: true });
         recreationAndSport = await CallModel.find({
           category: Categories.RECREATION_AND_SPORT,
@@ -1417,9 +1381,7 @@ describe("Call router test suite", () => {
 
     context("Invalid request (no query provided)", () => {
       beforeAll(async () => {
-        response = await supertest(app)
-          .get(`/call`)
-          .set("Authorization", `Bearer ${accessToken}`);
+        response = await supertest(app).get(`/call`);
       });
 
       it("Should return a 400 status code", () => {
@@ -1433,9 +1395,7 @@ describe("Call router test suite", () => {
 
     context("Invalid request ('page' is invalid)", () => {
       beforeAll(async () => {
-        response = await supertest(app)
-          .get(`/call?page=0`)
-          .set("Authorization", `Bearer ${accessToken}`);
+        response = await supertest(app).get(`/call?page=0`);
       });
 
       it("Should return a 400 status code", () => {
@@ -1446,36 +1406,6 @@ describe("Call router test suite", () => {
         expect(response.body.message).toBe(
           '"page" must be greater than or equal to 1'
         );
-      });
-    });
-
-    context("Without providing 'accessToken'", () => {
-      beforeAll(async () => {
-        response = await supertest(app).get(`/call?page=1`);
-      });
-
-      it("Should return a 400 status code", () => {
-        expect(response.status).toBe(400);
-      });
-
-      it("Should say that token wasn't provided", () => {
-        expect(response.body.message).toBe("No token provided");
-      });
-    });
-
-    context("With invalid 'accessToken'", () => {
-      beforeAll(async () => {
-        response = await supertest(app)
-          .get(`/call?page=1`)
-          .set("Authorization", `Bearer qwerty123`);
-      });
-
-      it("Should return a 401 status code", () => {
-        expect(response.status).toBe(401);
-      });
-
-      it("Should return an unauthorized status", () => {
-        expect(response.body.message).toBe("Unauthorized");
       });
     });
   });

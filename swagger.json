@@ -522,7 +522,6 @@
       "get": {
         "tags": ["Call"],
         "summary": "Get pages with categories by query pagination",
-        "security": [{ "Bearer": [] }],
         "parameters": [
           {
             "name": "search",
