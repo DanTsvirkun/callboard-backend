@@ -132,7 +132,6 @@ router.patch(
 );
 router.get(
   "/",
-  authorize,
   validate(getCallsSchema, "query"),
   tryCatchWrapper(loadPages)
 );
