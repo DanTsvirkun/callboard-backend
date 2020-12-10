@@ -291,55 +291,6 @@
             "content": {}
           }
         }
-      },
-      "patch": {
-        "tags": ["Call"],
-        "summary": "Edit call",
-        "security": [{ "Bearer": [] }],
-        "parameters": [
-          {
-            "name": "callId",
-            "in": "path",
-            "description": "Call's id ('id' field in call's object)",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "requestBody": {
-          "description": "Call's object (at least 1 field is required)",
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/PatchCallRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful operation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CallResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request (invalid request body or id) / No token provided / Setting the same price / More than 5 images provided / Setting a price for: Free, work or trade category",
-            "content": {}
-          },
-          "401": {
-            "description": "Unauthorized (invalid access token)",
-            "content": {}
-          },
-          "404": {
-            "description": "Call not found / Invalid user / Invalid session",
-            "content": {}
-          }
-        }
       }
     },
     "/call/favourite/{callId}": {
@@ -429,6 +380,55 @@
       }
     },
     "/call/{callId}": {
+      "patch": {
+        "tags": ["Call"],
+        "summary": "Edit call",
+        "security": [{ "Bearer": [] }],
+        "parameters": [
+          {
+            "name": "callId",
+            "in": "path",
+            "description": "Call's id ('id' field in call's object)",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "requestBody": {
+          "description": "Call's object (at least 1 field is required)",
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchCallRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (invalid request body or id) / No token provided / Setting the same price / More than 5 images provided / Setting a price for: Free, work or trade category",
+            "content": {}
+          },
+          "401": {
+            "description": "Unauthorized (invalid access token)",
+            "content": {}
+          },
+          "404": {
+            "description": "Call not found / Invalid user / Invalid session",
+            "content": {}
+          }
+        }
+      },
       "delete": {
         "tags": ["Call"],
         "summary": "Delete user's call",
