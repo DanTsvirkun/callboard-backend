@@ -1241,6 +1241,53 @@ describe("Call router test suite", () => {
     });
   });
 
+  describe("GET /call/specific/{category}", () => {
+    let response: Response;
+
+    context("Valid request", () => {
+      beforeAll(async () => {
+        response = await supertest(app).get("/call/specific/transport");
+      });
+
+      it("Should return a 200 status code", () => {
+        expect(response.status).toBe(200);
+      });
+
+      it("Should return an expected result", () => {
+        expect(response.body).toEqual([
+          {
+            title: "Test2",
+            description: "Test2",
+            category: Categories.TRANSPORT,
+            price: 1,
+            phone: "+380000000001",
+            isOnSale: true,
+            oldPrice: 4,
+            discountPercents: 75,
+            imageUrls: response.body[0].imageUrls,
+            _id: (createdCall as ICall)._id.toString(),
+            userId: (createdUser as IUser)._id.toString(),
+            __v: 0,
+          },
+        ]);
+      });
+    });
+
+    context("Valid request", () => {
+      beforeAll(async () => {
+        response = await supertest(app).get("/call/specific/trade");
+      });
+
+      it("Should return a 404 status code", () => {
+        expect(response.status).toBe(404);
+      });
+
+      it("Should return an expected result", () => {
+        expect(response.body.message).toEqual("No calls found");
+      });
+    });
+  });
+
   describe("DELETE /call/:callId", () => {
     let response: Response;
     let deletedCall: ICall | null;

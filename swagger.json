@@ -570,6 +570,36 @@
           }
         }
       }
+    },
+    "/call/specific/{category}": {
+      "get": {
+        "tags": ["Call"],
+        "summary": "Get calls from one category",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "path",
+            "required": true,
+            "description": "Category you want to load (property, transport, work, electronics, businessAndServices, recreationAndSport, free, trade)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetCategory"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No calls found",
+            "content": {}
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1667,6 +1697,73 @@
           "free",
           "trade"
         ]
+      },
+      "GetCategory": {
+        "type": "array",
+        "description": "Calls from one category",
+        "items": {
+          "type": "object",
+          "description": "Found call",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "Call's title",
+              "example": "Tesla Model X"
+            },
+            "imageUrls": {
+              "type": "array",
+              "description": "Call's image URLs",
+              "items": {
+                "type": "string",
+                "description": "Image URL"
+              }
+            },
+            "description": {
+              "type": "string",
+              "description": "Call's description",
+              "example": "New tesla"
+            },
+            "category": {
+              "type": "string",
+              "description": "Call's category",
+              "example": "Transport"
+            },
+            "price": {
+              "type": "number",
+              "description": "Call's price",
+              "example": 1500000
+            },
+            "oldPrice": {
+              "oneOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Call's old price (if was changed and became lower)",
+              "example": 1750000
+            },
+            "isOnSale": {
+              "type": "boolean",
+              "description": "Call's sale status",
+              "example": true
+            },
+            "discountPercents": {
+              "oneOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Call's discount percents (if on sale)",
+              "example": 14.28571428571429
+            },
+            "phone": {
+              "type": "string",
+              "description": "Call author's phone",
+              "example": "+380000000000"
+            },
+            "_id": {
+              "type": "string",
+              "description": "Call's id",
+              "example": "507f1f77bcf86cd799439013"
+            },
+            "__v": {
+              "type": "integer",
+              "description": "MongoDB' document's service versionKey (ignore)"
+            }
+          }
+        }
       }
     },
     "securitySchemes": {
