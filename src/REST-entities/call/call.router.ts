@@ -100,40 +100,44 @@ const router = Router();
 
 router.post(
   "/",
-  authorize,
+  tryCatchWrapper(authorize),
   multerMid.array("file"),
   validate(postCallSchema),
   tryCatchWrapper(postCall)
 );
 router.post(
   "/favourite/:callId",
-  authorize,
+  tryCatchWrapper(authorize),
   validate(callIdSchema, "params"),
   tryCatchWrapper(addToFavourites)
 );
 router.delete(
   "/favourite/:callId",
-  authorize,
+  tryCatchWrapper(authorize),
   validate(callIdSchema, "params"),
   tryCatchWrapper(removeFromFavourites)
 );
 router.delete(
   "/:callId",
-  authorize,
+  tryCatchWrapper(authorize),
   validate(callIdSchema, "params"),
   tryCatchWrapper(deleteCall)
 );
 router.patch(
   "/:callId",
-  authorize,
+  tryCatchWrapper(authorize),
   multerMid.array("file"),
   validate(callIdSchema, "params"),
   validate(editCallSchema),
   tryCatchWrapper(editCall)
 );
 router.get("/", validate(getCallsSchema, "query"), tryCatchWrapper(loadPages));
-router.get("/own", authorize, tryCatchWrapper(getCalls));
-router.get("/favourites", authorize, tryCatchWrapper(getFavourites));
+router.get("/own", tryCatchWrapper(authorize), tryCatchWrapper(getCalls));
+router.get(
+  "/favourites",
+  tryCatchWrapper(authorize),
+  tryCatchWrapper(getFavourites)
+);
 router.get(
   "/find",
   validate(searchCallsSchema, "query"),

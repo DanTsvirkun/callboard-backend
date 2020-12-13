@@ -78,7 +78,7 @@ describe("User router test suite", () => {
       });
     });
 
-    context("Without invalid 'accessToken'", () => {
+    context("With invalid 'accessToken'", () => {
       beforeAll(async () => {
         response = await supertest(app)
           .get("/user")
@@ -91,6 +91,50 @@ describe("User router test suite", () => {
 
       it("Should return an unauthorized status", () => {
         expect(response.body.message).toBe("Unauthorized");
+      });
+    });
+  });
+
+  describe("GET /user/{userId}", () => {
+    let response: Response;
+
+    context("Valid request", () => {
+      beforeAll(async () => {
+        response = await supertest(app).get(
+          `/user/${(createdUser as IUser)._id}`
+        );
+        createdUser = await UserModel.findOne({
+          email: "test@email.com",
+        }).lean();
+      });
+
+      it("Should return a 200 status code", () => {
+        expect(response.status).toBe(200);
+      });
+
+      it("Should return an expected result", () => {
+        expect(response.body).toEqual({
+          email: (createdUser as IUser).email,
+          registrationDate: (createdUser as IUser).registrationDate,
+        });
+      });
+    });
+
+    context("With invalid 'userId'", () => {
+      beforeAll(async () => {
+        response = await supertest(app)
+          .get("/user/qwerty123")
+          .set("Authorization", `Bearer qwerty123`);
+      });
+
+      it("Should return a 400 status code", () => {
+        expect(response.status).toBe(400);
+      });
+
+      it("Should say that 'userId' is invalid", () => {
+        expect(response.body.message).toBe(
+          "Invalid 'userId'. Must be a MongoDB ObjectId"
+        );
       });
     });
   });

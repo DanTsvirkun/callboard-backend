@@ -2,16 +2,16 @@ import mongoose, { Schema } from "mongoose";
 import { ICall } from "../../helpers/typescript-helpers/interfaces";
 
 export const callSchema = new Schema({
-  title: { type: String, required: true },
-  imageUrls: { type: [String], required: true },
-  description: { type: String, required: true },
-  category: { type: String, required: true },
-  price: { type: Number, required: true },
-  oldPrice: { type: Number, required: false },
-  isOnSale: { type: Boolean, required: true },
-  discountPercents: { type: Number, required: false },
-  phone: { type: String, required: true },
-  userId: { type: mongoose.Types.ObjectId, required: true },
+  title: String,
+  imageUrls: [String],
+  description: String,
+  category: String,
+  price: Number,
+  oldPrice: Number,
+  isOnSale: Boolean,
+  discountPercents: Number,
+  phone: String,
+  userId: mongoose.Types.ObjectId,
 });
 
 export default mongoose.model<ICall>("Call", callSchema);

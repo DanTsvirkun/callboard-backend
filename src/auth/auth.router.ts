@@ -41,7 +41,7 @@ router.post(
   validate(refreshTokensSchema),
   tryCatchWrapper(refreshTokens)
 );
-router.post("/logout", authorize, tryCatchWrapper(logout));
+router.post("/logout", tryCatchWrapper(authorize), tryCatchWrapper(logout));
 router.get("/google", tryCatchWrapper(googleAuth));
 router.get("/google-redirect", tryCatchWrapper(googleRedirect));
 

@@ -190,7 +190,7 @@
     "/user": {
       "get": {
         "tags": ["User"],
-        "summary": "Get user's information",
+        "summary": "Get user's information by access token",
         "security": [{ "Bearer": [] }],
         "responses": {
           "200": {
@@ -198,7 +198,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetUser"
+                  "$ref": "#/components/schemas/GetUserByToken"
                 }
               }
             }
@@ -209,6 +209,41 @@
           },
           "401": {
             "description": "Unauthorized (invalid access token)",
+            "content": {}
+          }
+        }
+      }
+    },
+    "/user/{userId}": {
+      "get": {
+        "tags": ["User"],
+        "summary": "Get user's information by user id",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "User's id ('id' field in user's object)",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetUserById"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (invalid id)",
+            "content": {}
+          },
+          "404": {
+            "description": "User not found",
             "content": {}
           }
         }
@@ -862,7 +897,7 @@
           }
         }
       },
-      "GetUser": {
+      "GetUserByToken": {
         "type": "object",
         "properties": {
           "email": {
@@ -1013,6 +1048,21 @@
                 }
               }
             }
+          }
+        }
+      },
+      "GetUserById": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "User's email",
+            "format": "email"
+          },
+          "registrationDate": {
+            "type": "string",
+            "description": "User's registration date (YYYY-MM-DD format)",
+            "example": "2020-12-31"
           }
         }
       },
