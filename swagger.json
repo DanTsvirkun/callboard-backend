@@ -783,6 +783,11 @@
                       "description": "Call author's phone",
                       "example": "+380000000000"
                     },
+                    "userId": {
+                      "type": "string",
+                      "description": "Call author's id",
+                      "example": "507f1f77bcf86cd799439011"
+                    },
                     "_id": {
                       "type": "string",
                       "description": "Call's id",
@@ -849,6 +854,11 @@
                       "type": "string",
                       "description": "Call author's phone",
                       "example": "+380000000000"
+                    },
+                    "userId": {
+                      "type": "string",
+                      "description": "Call author's id",
+                      "example": "507f1f77bcf86cd799439011"
                     },
                     "_id": {
                       "type": "string",
@@ -970,6 +980,11 @@
                   "description": "Call author's phone",
                   "example": "+380000000000"
                 },
+                "userId": {
+                  "type": "string",
+                  "description": "Call author's id",
+                  "example": "507f1f77bcf86cd799439011"
+                },
                 "_id": {
                   "type": "string",
                   "description": "Call's id",
@@ -1036,6 +1051,11 @@
                   "type": "string",
                   "description": "Call author's phone",
                   "example": "+380000000000"
+                },
+                "userId": {
+                  "type": "string",
+                  "description": "Call author's id",
+                  "example": "507f1f77bcf86cd799439011"
                 },
                 "_id": {
                   "type": "string",
@@ -1223,6 +1243,11 @@
                   "description": "Call author's phone",
                   "example": "+380000000000"
                 },
+                "userId": {
+                  "type": "string",
+                  "description": "Call author's id",
+                  "example": "507f1f77bcf86cd799439011"
+                },
                 "_id": {
                   "type": "string",
                   "description": "Call's id",
@@ -1332,6 +1357,11 @@
                   "description": "Call author's phone",
                   "example": "+380000000000"
                 },
+                "userId": {
+                  "type": "string",
+                  "description": "Call author's id",
+                  "example": "507f1f77bcf86cd799439011"
+                },
                 "_id": {
                   "type": "string",
                   "description": "Call's id",
@@ -1388,6 +1418,11 @@
                   "type": "string",
                   "description": "Call author's phone",
                   "example": "+380000000000"
+                },
+                "userId": {
+                  "type": "string",
+                  "description": "Call author's id",
+                  "example": "507f1f77bcf86cd799439011"
                 },
                 "_id": {
                   "type": "string",
@@ -1446,6 +1481,11 @@
                   "description": "Call author's phone",
                   "example": "+380000000000"
                 },
+                "userId": {
+                  "type": "string",
+                  "description": "Call author's id",
+                  "example": "507f1f77bcf86cd799439011"
+                },
                 "_id": {
                   "type": "string",
                   "description": "Call's id",
@@ -1502,6 +1542,11 @@
                   "type": "string",
                   "description": "Call author's phone",
                   "example": "+380000000000"
+                },
+                "userId": {
+                  "type": "string",
+                  "description": "Call author's id",
+                  "example": "507f1f77bcf86cd799439011"
                 },
                 "_id": {
                   "type": "string",
@@ -1576,6 +1621,11 @@
                   "description": "Call author's phone",
                   "example": "+380000000000"
                 },
+                "userId": {
+                  "type": "string",
+                  "description": "Call author's id",
+                  "example": "507f1f77bcf86cd799439011"
+                },
                 "_id": {
                   "type": "string",
                   "description": "Call's id",
@@ -1649,6 +1699,11 @@
                   "description": "Call author's phone",
                   "example": "+380000000000"
                 },
+                "userId": {
+                  "type": "string",
+                  "description": "Call author's id",
+                  "example": "507f1f77bcf86cd799439011"
+                },
                 "_id": {
                   "type": "string",
                   "description": "Call's id",
@@ -1717,6 +1772,11 @@
               "type": "string",
               "description": "Call author's phone",
               "example": "+380000000000"
+            },
+            "userId": {
+              "type": "string",
+              "description": "Call author's id",
+              "example": "507f1f77bcf86cd799439011"
             },
             "_id": {
               "type": "string",
@@ -1802,6 +1862,11 @@
               "type": "string",
               "description": "Call author's phone",
               "example": "+380000000000"
+            },
+            "userId": {
+              "type": "string",
+              "description": "Call author's id",
+              "example": "507f1f77bcf86cd799439011"
             },
             "_id": {
               "type": "string",
