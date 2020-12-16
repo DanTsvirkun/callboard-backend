@@ -16,6 +16,7 @@ import {
   searchCalls,
   getCategories,
   getCategory,
+  getAds,
 } from "./call.controller";
 import { multerMid } from "../../helpers/function-helpers/multer-config";
 import { Categories } from "../../helpers/typescript-helpers/enums";
@@ -145,5 +146,6 @@ router.get(
 );
 router.get("/categories", tryCatchWrapper(getCategories));
 router.get("/specific/:category", tryCatchWrapper(getCategory));
+router.get("/ads", tryCatchWrapper(getAds));
 
 export default router;

@@ -4,6 +4,7 @@ import { ICall, IUser } from "../../helpers/typescript-helpers/interfaces";
 import { uploadImage } from "../../helpers/function-helpers/multer-config";
 import CallModel from "./call.model";
 import UserModel from "../user/user.model";
+import ads from "./ads";
 
 export const postCall = async (req: Request, res: Response) => {
   const user = req.user;
@@ -106,7 +107,7 @@ export const deleteCall = async (req: Request, res: Response) => {
     return res.status(404).send({ message: "Call not found" });
   }
   await CallModel.findByIdAndDelete(callId);
-  let updatedUser = await UserModel.findOneAndUpdate(
+  await UserModel.findOneAndUpdate(
     { _id: (user as IUser)._id },
     { $pull: { calls: { _id: callId } } },
     { new: true }
@@ -114,7 +115,7 @@ export const deleteCall = async (req: Request, res: Response) => {
   if (
     (user as IUser).favourites.find((call) => call._id.toString() === callId)
   ) {
-    updatedUser = await UserModel.findOneAndUpdate(
+    await UserModel.findOneAndUpdate(
       { _id: (user as IUser)._id },
       { $pull: { favourites: { _id: callId } } },
       { new: true }
@@ -337,4 +338,8 @@ export const getCategory = async (req: Request, res: Response) => {
     return res.status(404).send({ message: "No calls found" });
   }
   return res.status(200).send(calls);
+};
+
+export const getAds = async (req: Request, res: Response) => {
+  res.status(200).send(ads);
 };
