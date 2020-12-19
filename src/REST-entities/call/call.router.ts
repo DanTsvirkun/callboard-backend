@@ -14,6 +14,7 @@ import {
   getFavourites,
   getCalls,
   searchCalls,
+  getRussianCategories,
   getCategories,
   getCategory,
   getAds,
@@ -87,7 +88,7 @@ const editCallSchema = Joi.object({
     }
     return value;
   }),
-}).min(1);
+});
 
 const getCallsSchema = Joi.object({
   page: Joi.number().required().min(1).max(3),
@@ -145,6 +146,7 @@ router.get(
   tryCatchWrapper(searchCalls)
 );
 router.get("/categories", tryCatchWrapper(getCategories));
+router.get("/russian-categories", tryCatchWrapper(getRussianCategories));
 router.get("/specific/:category", tryCatchWrapper(getCategory));
 router.get("/ads", tryCatchWrapper(getAds));
 

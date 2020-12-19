@@ -670,29 +670,27 @@ describe("Call router test suite", () => {
       price: {},
     };
 
-    const thirdInvalidReqBody = {};
-
-    const fourthInvalidReqBody = {
+    const thirdInvalidReqBody = {
       price: 2,
       extra: "",
     };
 
-    const fifthInvalidReqBody = {
+    const fourthInvalidReqBody = {
       price: 2,
       category: Categories.WORK,
     };
 
-    const sixthInvalidReqBody = {
+    const fifthInvalidReqBody = {
       price: 2,
       category: "qwerty123",
     };
 
-    const seventhInvalidReqBody = {
+    const sixthInvalidReqBody = {
       price: 2,
       phone: "qwerty123",
     };
 
-    const eighthInvalidReqBody = {
+    const seventhInvalidReqBody = {
       price: 1,
     };
 
@@ -973,29 +971,12 @@ describe("Call router test suite", () => {
       });
     });
 
-    context("With thirdInvalidReqBody (no fields provided)", () => {
+    context("With thirdInvalidReqBody (extra field provided)", () => {
       beforeAll(async () => {
         response = await supertest(app)
           .patch(`/call/${(createdCall as ICall)._id}`)
           .set("Authorization", `Bearer ${accessToken}`)
           .send(thirdInvalidReqBody);
-      });
-
-      it("Should return a 400 status code", () => {
-        expect(response.status).toBe(400);
-      });
-
-      it("Should say that at least 1 field is required", () => {
-        expect(response.body.message).toBe('"value" must have at least 1 key');
-      });
-    });
-
-    context("With fourthInvalidReqBody (extra field provided)", () => {
-      beforeAll(async () => {
-        response = await supertest(app)
-          .patch(`/call/${(createdCall as ICall)._id}`)
-          .set("Authorization", `Bearer ${accessToken}`)
-          .send(fourthInvalidReqBody);
       });
 
       it("Should return a 400 status code", () => {
@@ -1008,13 +989,13 @@ describe("Call router test suite", () => {
     });
 
     context(
-      "With fifthInvalidReqBody (setting 'price' with 'work' category)",
+      "With fourthInvalidReqBody (setting 'price' with 'work' category)",
       () => {
         beforeAll(async () => {
           response = await supertest(app)
             .patch(`/call/${(createdCall as ICall)._id}`)
             .set("Authorization", `Bearer ${accessToken}`)
-            .send(fifthInvalidReqBody);
+            .send(fourthInvalidReqBody);
         });
 
         it("Should return a 400 status code", () => {
@@ -1029,12 +1010,12 @@ describe("Call router test suite", () => {
       }
     );
 
-    context("With sixthInvalidReqBody (invalid 'category')", () => {
+    context("With fifthInvalidReqBody (invalid 'category')", () => {
       beforeAll(async () => {
         response = await supertest(app)
           .patch(`/call/${(createdCall as ICall)._id}`)
           .set("Authorization", `Bearer ${accessToken}`)
-          .send(sixthInvalidReqBody);
+          .send(fifthInvalidReqBody);
       });
 
       it("Should return a 400 status code", () => {
@@ -1048,12 +1029,12 @@ describe("Call router test suite", () => {
       });
     });
 
-    context("With seventhInvalidReqBody (invalid 'phone' format)", () => {
+    context("With sixthInvalidReqBody (invalid 'phone' format)", () => {
       beforeAll(async () => {
         response = await supertest(app)
           .patch(`/call/${(createdCall as ICall)._id}`)
           .set("Authorization", `Bearer ${accessToken}`)
-          .send(seventhInvalidReqBody);
+          .send(sixthInvalidReqBody);
       });
 
       it("Should return a 400 status code", () => {
@@ -1067,12 +1048,12 @@ describe("Call router test suite", () => {
       });
     });
 
-    context("With eighthInvalidReqBody (setting the same 'price')", () => {
+    context("With seventhInvalidReqBody (setting the same 'price')", () => {
       beforeAll(async () => {
         response = await supertest(app)
           .patch(`/call/${(createdCall as ICall)._id}`)
           .set("Authorization", `Bearer ${accessToken}`)
-          .send(eighthInvalidReqBody);
+          .send(seventhInvalidReqBody);
       });
 
       it("Should return a 400 status code", () => {
@@ -1479,6 +1460,33 @@ describe("Call router test suite", () => {
           "recreation and sport",
           "free",
           "trade",
+        ]);
+      });
+    });
+  });
+
+  describe("GET /call/russian-categories", () => {
+    let response: Response;
+
+    context("Valid request", () => {
+      beforeAll(async () => {
+        response = await supertest(app).get(`/call/russian-categories`);
+      });
+
+      it("Should return a 200 status code", () => {
+        expect(response.status).toBe(200);
+      });
+
+      it("Should return an expected result", () => {
+        expect(response.body).toEqual([
+          "Недвижимость",
+          "Транспорт",
+          "Работа",
+          "Электроника",
+          "Бизнес и услуги",
+          "Отдых и спорт",
+          "Отдам бесплатно",
+          "Обмен",
         ]);
       });
     });
