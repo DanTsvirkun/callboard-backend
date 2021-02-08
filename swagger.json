@@ -794,7 +794,7 @@
                     "category": {
                       "type": "string",
                       "description": "Call's category",
-                      "example": "Trade"
+                      "example": "trade"
                     },
                     "price": {
                       "type": "integer",
@@ -866,7 +866,7 @@
                     "category": {
                       "type": "string",
                       "description": "Call's category",
-                      "example": "Transport"
+                      "example": "transport"
                     },
                     "price": {
                       "type": "number",
@@ -991,7 +991,7 @@
                 "category": {
                   "type": "string",
                   "description": "Call's category",
-                  "example": "Trade"
+                  "example": "trade"
                 },
                 "price": {
                   "type": "integer",
@@ -1063,7 +1063,7 @@
                 "category": {
                   "type": "string",
                   "description": "Call's category",
-                  "example": "Transport"
+                  "example": "transport"
                 },
                 "price": {
                   "type": "number",
@@ -1149,7 +1149,17 @@
           "category": {
             "type": "string",
             "description": "Call's category",
-            "example": "Trade"
+            "example": "trade",
+            "enum": [
+              "property",
+              "transport",
+              "work",
+              "electronics",
+              "business and services",
+              "recreation and sport",
+              "free",
+              "trade"
+            ]
           },
           "price": {
             "type": "integer",
@@ -1185,7 +1195,7 @@
           "category": {
             "type": "string",
             "description": "Call's category",
-            "example": "Trade"
+            "example": "trade"
           },
           "price": {
             "type": "integer",
@@ -1254,7 +1264,7 @@
                 "category": {
                   "type": "string",
                   "description": "Call's category",
-                  "example": "Transport"
+                  "example": "transport"
                 },
                 "price": {
                   "type": "number",
@@ -1317,7 +1327,17 @@
           "category": {
             "type": "string",
             "description": "Call's category",
-            "example": "Trade"
+            "example": "trade",
+            "enum": [
+              "property",
+              "transport",
+              "work",
+              "electronics",
+              "business and services",
+              "recreation and sport",
+              "free",
+              "trade"
+            ]
           },
           "price": {
             "type": "integer",
@@ -1368,7 +1388,7 @@
                 "category": {
                   "type": "string",
                   "description": "Call's category",
-                  "example": "Transport"
+                  "example": "transport"
                 },
                 "price": {
                   "type": "number",
@@ -1440,7 +1460,7 @@
                 "category": {
                   "type": "string",
                   "description": "Call's category",
-                  "example": "Transport"
+                  "example": "transport"
                 },
                 "price": {
                   "type": "number",
@@ -1502,7 +1522,7 @@
                 "category": {
                   "type": "string",
                   "description": "Call's category",
-                  "example": "Transport"
+                  "example": "transport"
                 },
                 "price": {
                   "type": "number",
@@ -1564,7 +1584,7 @@
                 "category": {
                   "type": "string",
                   "description": "Call's category",
-                  "example": "Transport"
+                  "example": "transport"
                 },
                 "price": {
                   "type": "number",
@@ -1632,7 +1652,7 @@
                 "category": {
                   "type": "string",
                   "description": "Call's category",
-                  "example": "Transport"
+                  "example": "transport"
                 },
                 "price": {
                   "type": "number",
@@ -1710,7 +1730,7 @@
                 "category": {
                   "type": "string",
                   "description": "Call's category",
-                  "example": "Transport"
+                  "example": "transport"
                 },
                 "price": {
                   "type": "number",
@@ -1784,7 +1804,7 @@
             "category": {
               "type": "string",
               "description": "Call's category",
-              "example": "Transport"
+              "example": "transport"
             },
             "price": {
               "type": "number",
@@ -1892,7 +1912,7 @@
             "category": {
               "type": "string",
               "description": "Call's category",
-              "example": "Transport"
+              "example": "transport"
             },
             "price": {
               "type": "number",
