@@ -560,6 +560,8 @@
             "name": "search",
             "in": "query",
             "description": "Call's title",
+            "minLength": 1,
+            "maxLength": 100,
             "required": true
           }
         ],
@@ -1174,6 +1176,8 @@
           "price": {
             "type": "integer",
             "description": "Call's price",
+            "minimum": 0,
+            "maximum": 1000000000,
             "example": 0
           },
           "phone": {
@@ -1356,6 +1360,8 @@
           "price": {
             "type": "integer",
             "description": "Call's price",
+            "minimum": 0,
+            "maximum": 1000000000,
             "example": 0
           },
           "phone": {
