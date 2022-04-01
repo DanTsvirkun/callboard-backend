@@ -9,7 +9,7 @@
       "url": "https://opensource.org/licenses/MIT"
     }
   },
-  "servers": [{ "url": "https://callboard-backend.herokuapp.com" }],
+  "servers": [{ "url": "https://callboard-backend.goit.global" }],
   "consumes": ["application/json"],
   "produces": ["application/json"],
   "tags": [
@@ -250,6 +250,38 @@
       }
     },
     "/call": {
+      "get": {
+        "tags": ["Call"],
+        "summary": "Get pages with categories by query pagination",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Number of the page you want to load (1-3)",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetCalls"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (invalid query) / No token provided",
+            "content": {}
+          },
+          "401": {
+            "description": "Unauthorized (invalid access token)",
+            "content": {}
+          }
+        }
+      },
       "post": {
         "tags": ["Call"],
         "summary": "Post a call",
@@ -295,40 +327,89 @@
           }
         }
       },
-      "get": {
+      "patch": {
         "tags": ["Call"],
-        "summary": "Get pages with categories by query pagination",
+        "summary": "Edit call",
+        "security": [{ "Bearer": [] }],
         "parameters": [
           {
-            "name": "page",
-            "in": "query",
-            "description": "Number of the page you want to load (1-3)",
-            "required": true
+            "name": "callId",
+            "in": "path",
+            "description": "Call's id ('id' field in call's object)",
+            "required": true,
+            "type": "string"
           }
         ],
+        "requestBody": {
+          "description": "Call's object (at least 1 field is required)",
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchCallRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "Successful operation",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetCalls"
+                  "$ref": "#/components/schemas/CallResponse"
                 }
               }
             }
           },
           "400": {
-            "description": "Bad request (invalid query) / No token provided",
+            "description": "Bad request (invalid request body or id) / No token provided / Setting the same price / More than 5 images provided / Setting a price for: Free, work or trade category",
             "content": {}
           },
           "401": {
             "description": "Unauthorized (invalid access token)",
             "content": {}
+          },
+          "404": {
+            "description": "Call not found / Invalid user / Invalid session",
+            "content": {}
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Call"],
+        "summary": "Delete user's call",
+        "security": [{ "Bearer": [] }],
+        "parameters": [
+          {
+            "name": "callId",
+            "in": "path",
+            "description": "Call's id ('id' field in call's object)",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful operation",
+            "content": {}
+          },
+          "400": {
+            "description": "Bad request (invalid id) / No token provided",
+            "content": {}
+          },
+          "401": {
+            "description": "Unauthorized (invalid access token)",
+            "content": {}
+          },
+          "404": {
+            "description": "Call not found / Invalid user / Invalid session",
+            "content": {}
           }
         }
       }
     },
-    "/call/favourite/{callId}": {
+    "/call/favourite": {
       "post": {
         "tags": ["Call"],
         "summary": "Add call to favourites",
@@ -405,89 +486,6 @@
           },
           "403": {
             "description": "Not in favourites",
-            "content": {}
-          },
-          "404": {
-            "description": "Call not found / Invalid user / Invalid session",
-            "content": {}
-          }
-        }
-      }
-    },
-    "/call/{callId}": {
-      "patch": {
-        "tags": ["Call"],
-        "summary": "Edit call",
-        "security": [{ "Bearer": [] }],
-        "parameters": [
-          {
-            "name": "callId",
-            "in": "path",
-            "description": "Call's id ('id' field in call's object)",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "requestBody": {
-          "description": "Call's object (at least 1 field is required)",
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/PatchCallRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful operation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CallResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request (invalid request body or id) / No token provided / Setting the same price / More than 5 images provided / Setting a price for: Free, work or trade category",
-            "content": {}
-          },
-          "401": {
-            "description": "Unauthorized (invalid access token)",
-            "content": {}
-          },
-          "404": {
-            "description": "Call not found / Invalid user / Invalid session",
-            "content": {}
-          }
-        }
-      },
-      "delete": {
-        "tags": ["Call"],
-        "summary": "Delete user's call",
-        "security": [{ "Bearer": [] }],
-        "parameters": [
-          {
-            "name": "callId",
-            "in": "path",
-            "description": "Call's id ('id' field in call's object)",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful operation",
-            "content": {}
-          },
-          "400": {
-            "description": "Bad request (invalid id) / No token provided",
-            "content": {}
-          },
-          "401": {
-            "description": "Unauthorized (invalid access token)",
             "content": {}
           },
           "404": {
@@ -625,7 +623,7 @@
         }
       }
     },
-    "/call/specific/{category}": {
+    "/call/specific": {
       "get": {
         "tags": ["Call"],
         "summary": "Get calls from one category",
@@ -684,11 +682,15 @@
           "email": {
             "type": "string",
             "description": "User's email",
+            "minLength": 3,
+            "maxLength": 254,
             "format": "email"
           },
           "password": {
             "type": "string",
             "description": "User's password",
+            "minLength": 8,
+            "maxLength": 100,
             "example": "qwerty123"
           }
         }
@@ -720,11 +722,15 @@
           "email": {
             "type": "string",
             "description": "User's email",
+            "minLength": 3,
+            "maxLength": 254,
             "format": "email"
           },
           "password": {
             "type": "string",
             "description": "User's password",
+            "minLength": 8,
+            "maxLength": 100,
             "example": "qwerty123"
           }
         }
@@ -1139,11 +1145,15 @@
           "title": {
             "type": "string",
             "description": "Call's title",
+            "minLength": 2,
+            "maxLength": 100,
             "example": "Red Shirt"
           },
           "description": {
             "type": "string",
             "description": "Call's description",
+            "minLength": 2,
+            "maxLength": 100,
             "example": "New red shirt, made from cotton"
           },
           "category": {
@@ -1317,11 +1327,15 @@
           "title": {
             "type": "string",
             "description": "Call's title",
+            "minLength": 2,
+            "maxLength": 100,
             "example": "Red Shirt"
           },
           "description": {
             "type": "string",
             "description": "Call's description",
+            "minLength": 2,
+            "maxLength": 100,
             "example": "New red shirt, made from cotton"
           },
           "category": {
